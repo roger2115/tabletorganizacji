@@ -1608,32 +1608,6 @@ body {
   text-transform: uppercase;
 }
 
-.online-user-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: var(--dark);
-  border: 1px solid var(--border);
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
-}
-
-.online-status {
-  width: 8px;
-  height: 8px;
-  background: var(--yellow);
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-.user-activity {
-  margin-left: auto;
-  font-size: 12px;
-  color: #888;
-  font-style: italic;
-}
-
 /* CALENDAR */
 .calendar-header {
   text-align: center;
@@ -2502,14 +2476,6 @@ body::after {
 }
 
 /* =============================================
-   ONLINE STATUS DOT
-   ============================================= */
-
-.online-status {
-  box-shadow: 0 0 8px var(--yellow);
-}
-
-/* =============================================
    CLOCK HOVER
    ============================================= */
 
@@ -3016,10 +2982,7 @@ body::after {
         <span>PROJEKT XYZ</span>
       </div>
       
-      <div class="status-item" onclick="showOnlineUsers()" style="cursor: pointer;">
-        <div class="status-icon" style="background: var(--yellow);"></div>
-        <span id="online-counter">ONLINE: 1</span>
-      </div>
+
     </div>
 
     <div class="taskbar-center">
@@ -6803,42 +6766,6 @@ setTimeout(() => {
 }, 5000);
 
 // FUN FEATURES
-function showOnlineUsers() {
-  const onlineUsers = ['DrS', 'user', 'Agent_007', 'CyberNinja', 'DataMiner'];
-  const randomCount = Math.floor(Math.random() * 5) + 1;
-  const displayUsers = onlineUsers.slice(0, randomCount);
-  
-  const modalHtml = `
-    <div class="enhanced-modal">
-      <div class="modal-header">UŻYTKOWNICY ONLINE (${randomCount})</div>
-      <div class="modal-body">
-        ${displayUsers.map(user => `
-          <div class="online-user-item">
-            <div class="online-status"></div>
-            <span>${user}</span>
-            <span class="user-activity">${getRandomActivity()}</span>
-          </div>
-        `).join('')}
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" onclick="closeEnhancedModal()">ZAMKNIJ</button>
-      </div>
-    </div>
-  `;
-  showEnhancedModal(modalHtml);
-  
-  // Update counter
-  document.getElementById('online-counter').textContent = `ONLINE: ${randomCount}`;
-}
-
-function getRandomActivity() {
-  const activities = [
-    'Przegląda pliki', 'W czacie', 'Analizuje dane', 'Gra w Aimlab', 
-    'Sprawdza pacjentów', 'Bezczynny', 'Pisze raport', 'Monitoruje system'
-  ];
-  return activities[Math.floor(Math.random() * activities.length)];
-}
-
 function showRandomFact() {
   const facts = [
     'Cyberpunk 2077 ma ponad 1000 różnych zakończeń dialogów!',
