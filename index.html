@@ -2250,6 +2250,12 @@ function doLogin() {
   }
   
   const accounts = getAccounts();
+  if (!Array.isArray(accounts)) {
+    playSound('error');
+    notify('Błąd systemu kont', 'error');
+    return;
+  }
+  
   const account = accounts.find(a => a.login === login && a.password === pass);
   
   if (!account) {
@@ -2312,17 +2318,24 @@ function toggleRegisterMode() {
   const toggleBtn = document.getElementById('toggle-register');
   const loginBtn = document.querySelector('.btn-login');
   const subtitle = document.querySelector('.login-box .subtitle');
+  const roleTabs = document.querySelector('.role-tabs');
   
   if (isRegisterMode) {
     toggleBtn.textContent = 'POWRÓT DO LOGOWANIA';
     loginBtn.textContent = 'ZAŁÓŻ KONTO';
     loginBtn.onclick = doRegister;
     subtitle.textContent = '// REJESTRACJA NOWEGO UŻYTKOWNIKA //';
+    
+    // Hide role selection in register mode - force user role
+    roleTabs.style.display = 'none';
   } else {
     toggleBtn.textContent = 'ZAŁÓŻ NOWE KONTO';
     loginBtn.textContent = 'ZALOGUJ DO SYSTEMU';
     loginBtn.onclick = doLogin;
     subtitle.textContent = '// SYSTEM BEZPIECZNEGO DOSTĘPU //';
+    
+    // Show role selection in login mode
+    roleTabs.style.display = 'flex';
   }
   
   // Clear inputs
@@ -2333,7 +2346,8 @@ function toggleRegisterMode() {
 function doRegister() {
   const login = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value;
-  const selectedRole = document.querySelector('.role-tab.active').textContent.includes('ADMINISTRATOR') ? 'admin' : 'user';
+  // Force user role for new registrations - no admin selection
+  const selectedRole = 'user';
   
   if (!login || !pass) {
     playSound('error');
@@ -2354,6 +2368,11 @@ function doRegister() {
   }
   
   const accounts = getAccounts();
+  if (!Array.isArray(accounts)) {
+    playSound('error');
+    notify('Błąd systemu kont', 'error');
+    return;
+  }
   
   // Check if login already exists
   if (accounts.find(a => a.login === login)) {
@@ -2362,7 +2381,7 @@ function doRegister() {
     return;
   }
   
-  // Create new account
+  // Create new account - always as user
   const newAccount = {
     login: login,
     password: pass,
@@ -2386,12 +2405,8 @@ function doRegister() {
     // Start background music
     startBackgroundMusic();
     
-    // Show admin features
-    if (newAccount.role === 'admin') {
-      document.getElementById('btn-edit').style.display = 'block';
-      document.getElementById('tab-users-btn').style.display = 'block';
-      document.getElementById('tab-manage-btn').style.display = 'block';
-    }
+    // New users are always 'user' role - no admin features
+    // Admin features are hidden by default
     
     startClock();
     renderAll();
@@ -2429,7 +2444,12 @@ function doLogout() {
 function getAccounts() {
   const saved = localStorage.getItem('rp_accounts');
   if (saved) {
-    return JSON.parse(saved);
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error('Error parsing accounts:', e);
+    }
   }
   
   // Default accounts
