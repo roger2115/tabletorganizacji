@@ -2296,6 +2296,9 @@ function renderInfoCards() {
   document.getElementById('btn-add-info').style.display = isEditMode ? 'block' : 'none';
 }
 
+// Alias for backward compatibility
+window.loadInfoCards = renderInfoCards;
+
 function addInfoCard() {
   playSound('open');
   
@@ -2479,6 +2482,9 @@ function renderPatients() {
     renderBio();
   }
 }
+
+// Alias for backward compatibility
+window.loadPatients = renderPatients;
 
 function selectPatient(id) {
   const patients = getPatients();
@@ -3036,6 +3042,9 @@ function renderUsers() {
   `).join('');
 }
 
+// Alias for backward compatibility
+window.loadUsers = renderUsers;
+
 function addUser() {
   const login = document.getElementById('new-user-login').value.trim();
   const pass = document.getElementById('new-user-pass').value;
@@ -3404,6 +3413,9 @@ function renderFiles() {
     `;
   }).join('');
 }
+
+// Alias for backward compatibility
+window.loadFiles = renderFiles;
 
 function showAddFileDialog() {
   playSound('open');
