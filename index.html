@@ -184,6 +184,25 @@ body {
   box-shadow: 0 0 20px rgba(232, 0, 61, 0.5);
 }
 
+.btn-register {
+  background: transparent;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  padding: 0.75rem 1.5rem;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.btn-register:hover {
+  background: rgba(0, 229, 204, 0.1);
+  box-shadow: 0 0 15px rgba(0, 229, 204, 0.3);
+}
+
 /* TABLET UI */
 #tablet-ui {
   display: none;
@@ -1339,6 +1358,123 @@ body {
 .event-desc {
   color: #fff;
 }
+/* CHAT STYLES */
+.chat-container {
+  background: var(--dark-panel);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--cyan);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.chat-messages {
+  height: 400px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--dark);
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--dark-panel);
+  border-left: 3px solid var(--cyan);
+  animation: fadeIn 0.3s;
+}
+
+.chat-message.own {
+  border-left-color: var(--red);
+  background: rgba(232, 0, 61, 0.1);
+}
+
+.chat-message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.chat-message-user {
+  font-size: 12px;
+  color: var(--cyan);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.chat-message.own .chat-message-user {
+  color: var(--red);
+}
+
+.chat-message-time {
+  font-size: 10px;
+  color: #888;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.chat-message-content {
+  font-size: 14px;
+  color: #fff;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.chat-input-container {
+  display: flex;
+  padding: 1rem;
+  gap: 1rem;
+  background: var(--dark-panel);
+}
+
+#chat-input {
+  flex: 1;
+  padding: 0.75rem;
+  background: var(--dark);
+  border: 1px solid var(--border);
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+#chat-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 229, 204, 0.2);
+}
+
+.btn-chat-send {
+  padding: 0.75rem 1.5rem;
+  background: var(--cyan);
+  border: none;
+  color: #000;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.btn-chat-send:hover {
+  background: #00ffdd;
+  box-shadow: 0 0 20px rgba(0, 229, 204, 0.5);
+}
+
+.btn-chat-send:disabled {
+  background: #555;
+  color: #888;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.chat-empty {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-style: italic;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -1574,6 +1710,10 @@ body {
     </div>
     
     <button class="btn-login" onclick="doLogin()">ZALOGUJ DO SYSTEMU</button>
+    
+    <div style="text-align: center; margin-top: 1rem;">
+      <button class="btn-register" onclick="toggleRegisterMode()" id="toggle-register">ZAŁÓŻ NOWE KONTO</button>
+    </div>
   </div>
 </div>
 
@@ -1610,6 +1750,18 @@ body {
       <div id="info-cards" class="info-grid"></div>
       
       <button class="btn-add" id="btn-add-info" style="display:none;" onclick="addInfoCard()">+ DODAJ NOWĄ WIADOMOŚĆ</button>
+      
+      <!-- CZAT OGÓLNY -->
+      <div class="section-title" style="margin-top: 3rem;">// CZAT OGÓLNY ■</div>
+      
+      <div class="chat-container">
+        <div class="chat-messages" id="chat-messages"></div>
+        
+        <div class="chat-input-container">
+          <input type="text" id="chat-input" placeholder="Napisz wiadomość..." maxlength="500">
+          <button class="btn-chat-send" onclick="sendChatMessage()">WYŚLIJ</button>
+        </div>
+      </div>
     </div>
 
     <!-- TAB: MEDICAL -->
@@ -2107,6 +2259,7 @@ function doLogin() {
   }
   
   currentUser = account;
+  window.currentUser = account;
   
   // Check first login
   const firstLoginKey = `rp_logged_${login}`;
@@ -2134,6 +2287,119 @@ function doLogin() {
   
   startClock();
   renderAll();
+  loadLocalSettings();
+}
+
+function loadLocalSettings() {
+  // Load WiFi status
+  const wifiStatus = localStorage.getItem('local_wifi_status') || 'ON';
+  document.getElementById('wifi-status').textContent = `WIFI: ${wifiStatus}`;
+  
+  // Load Bluetooth status
+  const bluetoothStatus = localStorage.getItem('local_bluetooth_status') || 'OFF';
+  document.getElementById('bluetooth-status').textContent = `BT: ${bluetoothStatus}`;
+  
+  // Load brightness
+  const brightness = localStorage.getItem('local_brightness') || '85';
+  document.getElementById('brightness-level').textContent = `JASNOŚĆ: ${brightness}%`;
+  document.body.style.filter = `brightness(${parseInt(brightness) / 100})`;
+}
+
+let isRegisterMode = false;
+
+function toggleRegisterMode() {
+  isRegisterMode = !isRegisterMode;
+  const toggleBtn = document.getElementById('toggle-register');
+  const loginBtn = document.querySelector('.btn-login');
+  const subtitle = document.querySelector('.login-box .subtitle');
+  
+  if (isRegisterMode) {
+    toggleBtn.textContent = 'POWRÓT DO LOGOWANIA';
+    loginBtn.textContent = 'ZAŁÓŻ KONTO';
+    loginBtn.onclick = doRegister;
+    subtitle.textContent = '// REJESTRACJA NOWEGO UŻYTKOWNIKA //';
+  } else {
+    toggleBtn.textContent = 'ZAŁÓŻ NOWE KONTO';
+    loginBtn.textContent = 'ZALOGUJ DO SYSTEMU';
+    loginBtn.onclick = doLogin;
+    subtitle.textContent = '// SYSTEM BEZPIECZNEGO DOSTĘPU //';
+  }
+  
+  // Clear inputs
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+function doRegister() {
+  const login = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const selectedRole = document.querySelector('.role-tab.active').textContent.includes('ADMINISTRATOR') ? 'admin' : 'user';
+  
+  if (!login || !pass) {
+    playSound('error');
+    notify('Wprowadź login i hasło', 'error');
+    return;
+  }
+  
+  if (login.length < 3) {
+    playSound('error');
+    notify('Login musi mieć minimum 3 znaki', 'error');
+    return;
+  }
+  
+  if (pass.length < 4) {
+    playSound('error');
+    notify('Hasło musi mieć minimum 4 znaki', 'error');
+    return;
+  }
+  
+  const accounts = getAccounts();
+  
+  // Check if login already exists
+  if (accounts.find(a => a.login === login)) {
+    playSound('error');
+    notify('Login już istnieje', 'error');
+    return;
+  }
+  
+  // Create new account
+  const newAccount = {
+    login: login,
+    password: pass,
+    role: selectedRole
+  };
+  
+  accounts.push(newAccount);
+  saveAccounts(accounts);
+  
+  playSound('save');
+  notify('Konto utworzone pomyślnie!');
+  
+  // Auto login with new account
+  setTimeout(() => {
+    currentUser = newAccount;
+    window.currentUser = newAccount;
+    
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('tablet-ui').style.display = 'flex';
+    
+    // Start background music
+    startBackgroundMusic();
+    
+    // Show admin features
+    if (newAccount.role === 'admin') {
+      document.getElementById('btn-edit').style.display = 'block';
+      document.getElementById('tab-users-btn').style.display = 'block';
+      document.getElementById('tab-manage-btn').style.display = 'block';
+    }
+    
+    startClock();
+    renderAll();
+    loadLocalSettings();
+    
+    playSound('firstLogin');
+    notify('Witaj w systemie!');
+  }, 1500);
 }
 
 function doLogout() {
@@ -2218,7 +2484,10 @@ function switchTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   
   // Render content
-  if (tab === 'info') renderInfoCards();
+  if (tab === 'info') {
+    renderInfoCards();
+    renderChatMessages();
+  }
   if (tab === 'med') renderPatients();
   if (tab === 'files') renderFiles();
   if (tab === 'users') renderUsers();
@@ -2249,6 +2518,7 @@ function toggleEdit() {
 
 function renderAll() {
   renderInfoCards();
+  renderChatMessages();
   renderPatients();
   renderFiles();
   renderUsers();
@@ -2418,6 +2688,114 @@ function deleteInfoCard(id) {
     notify('Wiadomość usunięta');
   });
 }
+
+// ============================================
+// CHAT SYSTEM
+// ============================================
+function getChatMessages() {
+  const stored = localStorage.getItem('rp_chat_messages');
+  if (stored) {
+    return JSON.parse(stored);
+  }
+  return [];
+}
+
+function saveChatMessages(messages) {
+  localStorage.setItem('rp_chat_messages', JSON.stringify(messages));
+  
+  // Save to Firebase
+  saveToFirebase('rp_chat_messages', messages);
+}
+
+function renderChatMessages() {
+  const messages = getChatMessages();
+  const container = document.getElementById('chat-messages');
+  const currentUser = getCurrentUser();
+  
+  if (messages.length === 0) {
+    container.innerHTML = '<div class="chat-empty">Brak wiadomości. Napisz pierwszą!</div>';
+    return;
+  }
+  
+  container.innerHTML = messages.map(msg => {
+    const isOwn = msg.user === currentUser.login;
+    const date = new Date(msg.timestamp).toLocaleString('pl-PL', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit'
+    });
+    
+    return `
+      <div class="chat-message ${isOwn ? 'own' : ''}">
+        <div class="chat-message-header">
+          <span class="chat-message-user">${msg.user}</span>
+          <span class="chat-message-time">${date}</span>
+        </div>
+        <div class="chat-message-content">${escapeHtml(msg.content)}</div>
+      </div>
+    `;
+  }).join('');
+  
+  // Scroll to bottom
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const content = input.value.trim();
+  
+  if (!content) {
+    playSound('error');
+    return;
+  }
+  
+  const currentUser = getCurrentUser();
+  const messages = getChatMessages();
+  
+  const newMessage = {
+    id: Date.now(),
+    user: currentUser.login,
+    content: content,
+    timestamp: Date.now()
+  };
+  
+  messages.push(newMessage);
+  
+  // Keep only last 100 messages
+  if (messages.length > 100) {
+    messages.splice(0, messages.length - 100);
+  }
+  
+  saveChatMessages(messages);
+  renderChatMessages();
+  
+  input.value = '';
+  playSound('save');
+  notify('Wiadomość wysłana');
+}
+
+function getCurrentUser() {
+  return window.currentUser || { login: 'Nieznany', role: 'user' };
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Enter key support for chat
+document.addEventListener('DOMContentLoaded', () => {
+  const chatInput = document.getElementById('chat-input');
+  if (chatInput) {
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendChatMessage();
+      }
+    });
+  }
+});
 
 // ============================================
 // PATIENTS
@@ -3503,8 +3881,8 @@ function showFileContent(id) {
   playSound('click');
   
   if (file.locked) {
-    showConfirmDialog('PLIK CHRONIONY', 'Plik chroniony hasłem.\nWprowadź hasło:', 'password', (password) => {
-      if (password !== file.password) {
+    showInputDialog('PLIK CHRONIONY', 'Plik chroniony hasłem.\nWprowadź hasło:', 'password', '', (password) => {
+      if (!password || password !== file.password) {
         playSound('error');
         notify('Nieprawidłowe hasło', 'error');
         return;
@@ -3636,7 +4014,12 @@ function deleteFile(id) {
 function toggleWiFi() {
   const status = document.getElementById('wifi-status');
   const isOn = status.textContent.includes('ON');
-  status.textContent = isOn ? 'WIFI: OFF' : 'WIFI: ON';
+  const newState = isOn ? 'OFF' : 'ON';
+  status.textContent = `WIFI: ${newState}`;
+  
+  // Save locally (not to Firebase)
+  localStorage.setItem('local_wifi_status', newState);
+  
   playSound('click');
   notify(isOn ? 'WiFi wyłączone' : 'WiFi włączone');
 }
@@ -3644,16 +4027,26 @@ function toggleWiFi() {
 function toggleBluetooth() {
   const status = document.getElementById('bluetooth-status');
   const isOn = status.textContent.includes('ON');
-  status.textContent = isOn ? 'BT: OFF' : 'BT: ON';
+  const newState = isOn ? 'OFF' : 'ON';
+  status.textContent = `BT: ${newState}`;
+  
+  // Save locally (not to Firebase)
+  localStorage.setItem('local_bluetooth_status', newState);
+  
   playSound('click');
   notify(isOn ? 'Bluetooth wyłączony' : 'Bluetooth włączony');
 }
 
 function adjustBrightness() {
-  showInputDialog('JASNOŚĆ EKRANU', 'Wprowadź poziom jasności (0-100):', 'number', '85', (value) => {
+  const currentBrightness = localStorage.getItem('local_brightness') || '85';
+  showInputDialog('JASNOŚĆ EKRANU', 'Wprowadź poziom jasności (0-100):', 'number', currentBrightness, (value) => {
     const brightness = Math.max(0, Math.min(100, parseInt(value) || 85));
     document.getElementById('brightness-level').textContent = `JASNOŚĆ: ${brightness}%`;
     document.body.style.filter = `brightness(${brightness / 100})`;
+    
+    // Save locally (not to Firebase)
+    localStorage.setItem('local_brightness', brightness.toString());
+    
     playSound('click');
     notify(`Jasność ustawiona na ${brightness}%`);
   });
@@ -4208,10 +4601,7 @@ function applyAimlabSettings() {
   
   localStorage.setItem('rp_aimlab_settings', JSON.stringify(aimlabSettings));
   
-  // Save to Firebase
-  if (window.saveToFirebase) {
-    window.saveToFirebase('rp_aimlab_settings', aimlabSettings);
-  }
+  // Aimlab settings are LOCAL ONLY - not synced to Firebase
   
   hideAimlabSettings();
   notify('Ustawienia Aimlab zapisane');
@@ -4929,6 +5319,38 @@ function setupRealtimeListeners() {
         renderUsers();
       }
     }
+  }, (error) => {
+    console.error('❌ Firebase accounts sync error:', error);
+  });
+  
+  // Config sync
+  window.db.ref('tablet/rp_config').on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      localStorage.setItem('rp_config', JSON.stringify(data));
+      console.log('📡 Config synced from Firebase');
+      
+      // Update global CONFIG object
+      Object.assign(CONFIG, data);
+    }
+  }, (error) => {
+    console.error('❌ Firebase config sync error:', error);
+  });
+  
+  // Chat messages sync
+  window.db.ref('tablet/rp_chat_messages').on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      localStorage.setItem('rp_chat_messages', JSON.stringify(data));
+      console.log('📡 Chat messages synced from Firebase');
+      
+      // Refresh chat if we're on the info tab
+      if (document.querySelector('#tab-info.active')) {
+        renderChatMessages();
+      }
+    }
+  }, (error) => {
+    console.error('❌ Firebase chat sync error:', error);
   });
 }
 
