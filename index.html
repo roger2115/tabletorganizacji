@@ -2170,6 +2170,11 @@ function getAccounts() {
 
 function saveAccounts(accounts) {
   localStorage.setItem('rp_accounts', JSON.stringify(accounts));
+  
+  // Save to Firebase
+  if (window.saveToFirebase) {
+    window.saveToFirebase('rp_accounts', accounts);
+  }
 }
 
 // ============================================
@@ -2259,6 +2264,11 @@ function getInfoCards() {
 
 function saveInfoCards(cards) {
   localStorage.setItem('rp_info_cards', JSON.stringify(cards));
+  
+  // Save to Firebase
+  if (window.saveToFirebase) {
+    window.saveToFirebase('rp_info', cards);
+  }
 }
 
 function renderInfoCards() {
@@ -2436,6 +2446,11 @@ function getPatients() {
 
 function savePatients(patients) {
   localStorage.setItem('rp_patients', JSON.stringify(patients));
+  
+  // Save to Firebase
+  if (window.saveToFirebase) {
+    window.saveToFirebase('rp_patients', patients);
+  }
 }
 
 function renderPatients() {
@@ -2933,6 +2948,12 @@ function saveXYZProject() {
   };
   
   localStorage.setItem('rp_xyz_project', JSON.stringify(xyzData));
+  
+  // Save to Firebase
+  if (window.saveToFirebase) {
+    window.saveToFirebase('rp_xyz_project', xyzData);
+  }
+  
   closeEnhancedModal();
   playSound('save');
   notify('Projekt XYZ zaktualizowany');
@@ -3344,6 +3365,11 @@ function getFiles() {
 
 function saveFiles(files) {
   localStorage.setItem('rp_files', JSON.stringify(files));
+  
+  // Save to Firebase
+  if (window.saveToFirebase) {
+    window.saveToFirebase('rp_files', files);
+  }
 }
 
 function renderFiles() {
@@ -4470,6 +4496,399 @@ document.getElementById('modal-overlay').addEventListener('click', (e) => {
     closeModal();
   }
 });
+
+// ============================================
+// FIREBASE DATABASE INTEGRATION
+// ============================================
+
+// Firebase CDN scripts will be loaded dynamically
+function loadFirebaseScripts() {
+  return new Promise((resolve, reject) => {
+    // Load Firebase App
+    const appScript = document.createElement('script');
+    appScript.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+    appScript.onload = () => {
+      // Load Firebase Database
+      const dbScript = document.createElement('script');
+      dbScript.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js';
+      dbScript.onload = () => resolve();
+      dbScript.onerror = () => reject(new Error('Failed to load Firebase Database'));
+      document.head.appendChild(dbScript);
+    };
+    appScript.onerror = () => reject(new Error('Failed to load Firebase App'));
+    document.head.appendChild(appScript);
+  });
+}
+
+// Initialize Firebase
+async function initializeFirebase() {
+  try {
+    await loadFirebaseScripts();
+    
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyADXlbc3tksLkLsIEx4pDi4BQJUxQ2tPxY",
+      authDomain: "tablet-organizacji.firebaseapp.com",
+      databaseURL: "https://tablet-organizacji-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "tablet-organizacji",
+      storageBucket: "tablet-organizacji.firebasestorage.app",
+      messagingSenderId: "900090685894",
+      appId: "1:900090685894:web:4601fa4b06bd1de59b2ac7",
+      measurementId: "G-K112W7TPQK"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    window.db = firebase.database();
+    window.firebaseInitialized = true;
+    
+    console.log('🔥 Firebase initialized successfully');
+    
+    // Setup database functions
+    setupDatabaseFunctions();
+    
+    // Setup real-time listeners
+    setupRealtimeListeners();
+    
+    // Setup connection status
+    setupConnectionStatus();
+    
+    // Show success notification
+    setTimeout(() => {
+      notify('Baza danych połączona');
+    }, 2000);
+    
+  } catch (error) {
+    console.error('❌ Firebase initialization failed:', error);
+    window.firebaseInitialized = false;
+    
+    setTimeout(() => {
+      notify('Błąd połączenia z bazą danych - tryb offline', 'error');
+    }, 2000);
+  }
+}
+
+// Database functions
+function setupDatabaseFunctions() {
+  // Save to Firebase
+  window.saveToFirebase = async function(key, data) {
+    if (!window.firebaseInitialized || !window.db) {
+      console.log('Firebase not available, saving locally only');
+      return false;
+    }
+    
+    try {
+      await window.db.ref(`tablet/${key}`).set(data);
+      console.log(`✅ ${key} saved to Firebase`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to save ${key} to Firebase:`, error);
+      return false;
+    }
+  };
+
+  // Load from Firebase
+  window.loadFromFirebase = async function(key) {
+    if (!window.firebaseInitialized || !window.db) {
+      return null;
+    }
+    
+    try {
+      const snapshot = await window.db.ref(`tablet/${key}`).once('value');
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        console.log(`📥 ${key} loaded from Firebase`);
+        return data;
+      }
+    } catch (error) {
+      console.error(`❌ Failed to load ${key} from Firebase:`, error);
+    }
+    return null;
+  };
+
+  // Enhanced save function that saves both locally and to Firebase
+  window.saveData = async function(key, data) {
+    // Always save locally first (offline support)
+    localStorage.setItem(key, JSON.stringify(data));
+    
+    // Try to save to Firebase
+    const firebaseSaved = await window.saveToFirebase(key, data);
+    
+    if (firebaseSaved) {
+      console.log(`💾 ${key} saved to both local and Firebase`);
+    } else {
+      console.log(`💾 ${key} saved locally only`);
+    }
+    
+    return true;
+  };
+}
+
+// Real-time listeners
+function setupRealtimeListeners() {
+  if (!window.firebaseInitialized || !window.db) return;
+  
+  // Info cards sync
+  window.db.ref('tablet/rp_info').on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      localStorage.setItem('rp_info', JSON.stringify(data));
+      console.log('📡 Info cards synced from Firebase');
+      
+      // Refresh UI if we're on the info tab
+      if (document.querySelector('#tab-info.active')) {
+        loadInfoCards();
+      }
+    }
+  });
+  
+  // Patients sync
+  window.db.ref('tablet/rp_patients').on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      localStorage.setItem('rp_patients', JSON.stringify(data));
+      console.log('📡 Patients synced from Firebase');
+      
+      // Refresh UI if we're on the medical tab
+      if (document.querySelector('#tab-med.active')) {
+        loadPatients();
+      }
+    }
+  });
+  
+  // Files sync
+  window.db.ref('tablet/rp_files').on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      localStorage.setItem('rp_files', JSON.stringify(data));
+      console.log('📡 Files synced from Firebase');
+      
+      // Refresh UI if we're on the files tab
+      if (document.querySelector('#tab-files.active')) {
+        loadFiles();
+      }
+    }
+  });
+  
+  // XYZ project sync
+  window.db.ref('tablet/rp_xyz_project').on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      localStorage.setItem('rp_xyz_project', JSON.stringify(data));
+      console.log('📡 XYZ project synced from Firebase');
+      
+      // Refresh XYZ tab if active
+      if (document.querySelector('#tab-xyz.active')) {
+        // Reload XYZ data
+        setTimeout(() => {
+          const savedXYZ = localStorage.getItem('rp_xyz_project');
+          if (savedXYZ) {
+            try {
+              const xyzData = JSON.parse(savedXYZ);
+              
+              // Update notes
+              const notesEl = document.getElementById('xyz-notes');
+              if (notesEl && xyzData.notes) notesEl.textContent = xyzData.notes;
+              
+              // Update progress bars and other elements
+              const progressBars = document.querySelectorAll('#tab-xyz .progress-fill');
+              if (progressBars[0] && xyzData.alpha !== undefined) progressBars[0].style.width = xyzData.alpha + '%';
+              if (progressBars[1] && xyzData.beta !== undefined) progressBars[1].style.width = xyzData.beta + '%';
+              if (progressBars[2] && xyzData.tests !== undefined) progressBars[2].style.width = xyzData.tests + '%';
+            } catch (e) {
+              console.error('Failed to parse XYZ data:', e);
+            }
+          }
+        }, 100);
+      }
+    }
+  });
+  
+  // User accounts sync
+  window.db.ref('tablet/rp_accounts').on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      localStorage.setItem('rp_accounts', JSON.stringify(data));
+      console.log('📡 User accounts synced from Firebase');
+      
+      // Refresh users list if we're on the users tab
+      if (document.querySelector('#tab-users.active')) {
+        loadUsers();
+      }
+    }
+  });
+}
+
+// Connection status
+function setupConnectionStatus() {
+  if (!window.firebaseInitialized || !window.db) return;
+  
+  window.db.ref('.info/connected').on('value', (snapshot) => {
+    const connected = snapshot.val();
+    updateDatabaseStatus(connected);
+  });
+}
+
+function updateDatabaseStatus(connected) {
+  const statusEl = document.querySelector('.taskbar-left .status-item:first-child span');
+  if (statusEl) {
+    if (window.firebaseInitialized) {
+      statusEl.textContent = connected ? 'DB: ONLINE' : 'DB: OFFLINE';
+      statusEl.style.color = connected ? 'var(--cyan)' : 'var(--yellow)';
+    } else {
+      statusEl.textContent = 'DB: ERROR';
+      statusEl.style.color = 'var(--red)';
+    }
+  }
+}
+
+// Override existing save functions to use Firebase
+function integrateFirebaseWithExistingFunctions() {
+  // Override info card functions
+  const originalSaveInfoCard = window.saveInfoCard;
+  if (originalSaveInfoCard) {
+    window.saveInfoCard = async function() {
+      const result = originalSaveInfoCard.apply(this, arguments);
+      
+      // Save to Firebase
+      const info = JSON.parse(localStorage.getItem('rp_info') || '[]');
+      await window.saveToFirebase('rp_info', info);
+      
+      return result;
+    };
+  }
+  
+  // Override patient functions
+  const originalSavePatient = window.savePatient;
+  if (originalSavePatient) {
+    window.savePatient = async function() {
+      const result = originalSavePatient.apply(this, arguments);
+      
+      // Save to Firebase
+      const patients = JSON.parse(localStorage.getItem('rp_patients') || '[]');
+      await window.saveToFirebase('rp_patients', patients);
+      
+      return result;
+    };
+  }
+  
+  // Override XYZ project save
+  const originalSaveXYZProject = window.saveXYZProject;
+  if (originalSaveXYZProject) {
+    window.saveXYZProject = async function() {
+      const result = originalSaveXYZProject.apply(this, arguments);
+      
+      // Save to Firebase
+      const xyzData = localStorage.getItem('rp_xyz_project');
+      if (xyzData) {
+        await window.saveToFirebase('rp_xyz_project', JSON.parse(xyzData));
+      }
+      
+      return result;
+    };
+  }
+}
+
+// Sync functions for manual use
+window.syncToFirebase = async function() {
+  if (!window.firebaseInitialized) {
+    notify('Baza danych niedostępna', 'error');
+    return;
+  }
+  
+  const keys = ['rp_info', 'rp_patients', 'rp_files', 'rp_xyz_project', 'rp_accounts'];
+  let synced = 0;
+  
+  for (const key of keys) {
+    const data = localStorage.getItem(key);
+    if (data) {
+      try {
+        const success = await window.saveToFirebase(key, JSON.parse(data));
+        if (success) synced++;
+      } catch (e) {
+        console.error(`Failed to sync ${key}:`, e);
+      }
+    }
+  }
+  
+  notify(`Zsynchronizowano ${synced}/${keys.length} tabel`);
+};
+
+window.syncFromFirebase = async function() {
+  if (!window.firebaseInitialized) {
+    notify('Baza danych niedostępna', 'error');
+    return;
+  }
+  
+  const keys = ['rp_info', 'rp_patients', 'rp_files', 'rp_xyz_project', 'rp_accounts'];
+  let synced = 0;
+  
+  for (const key of keys) {
+    try {
+      const data = await window.loadFromFirebase(key);
+      if (data) {
+        localStorage.setItem(key, JSON.stringify(data));
+        synced++;
+      }
+    } catch (e) {
+      console.error(`Failed to load ${key}:`, e);
+    }
+  }
+  
+  notify(`Pobrano ${synced}/${keys.length} tabel`);
+  
+  // Refresh UI
+  setTimeout(() => {
+    location.reload();
+  }, 1000);
+};
+
+// Initialize Firebase when page loads
+setTimeout(() => {
+  initializeFirebase().then(() => {
+    // Integrate with existing functions after a delay
+    setTimeout(integrateFirebaseWithExistingFunctions, 2000);
+  });
+}, 3000);
+
+// Add sync controls to management tab
+setTimeout(() => {
+  const manageSection = document.querySelector('.manage-section');
+  if (manageSection && !document.getElementById('firebase-sync-section')) {
+    const syncHtml = `
+      <div id="firebase-sync-section" class="config-editor" style="margin-bottom: 2rem;">
+        <h3>SYNCHRONIZACJA FIREBASE</h3>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+          <button class="btn-primary" onclick="syncToFirebase()" style="flex: 1; min-width: 200px;">📤 WYŚLIJ DO CHMURY</button>
+          <button class="btn-secondary" onclick="syncFromFirebase()" style="flex: 1; min-width: 200px;">📥 POBIERZ Z CHMURY</button>
+        </div>
+        <div id="firebase-status" style="color: var(--cyan); font-size: 12px; margin-bottom: 1rem;">
+          Status: Inicjalizacja...
+        </div>
+        <p style="color: #888; font-size: 12px;">
+          Dane są automatycznie synchronizowane w czasie rzeczywistym. 
+          Użyj przycisków tylko w przypadku problemów z synchronizacją.
+        </p>
+      </div>
+    `;
+    manageSection.insertAdjacentHTML('afterbegin', syncHtml);
+    
+    // Update status periodically
+    setInterval(() => {
+      const statusEl = document.getElementById('firebase-status');
+      if (statusEl) {
+        if (window.firebaseInitialized) {
+          statusEl.textContent = 'Status: POŁĄCZONO ✅';
+          statusEl.style.color = 'var(--cyan)';
+        } else {
+          statusEl.textContent = 'Status: BŁĄD POŁĄCZENIA ❌';
+          statusEl.style.color = 'var(--red)';
+        }
+      }
+    }, 2000);
+  }
+}, 5000);
+
 </script>
 </body>
 </html>
