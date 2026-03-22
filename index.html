@@ -1932,6 +1932,13 @@ body {
 
 <script>
 // ============================================
+// CONFIGURATION
+// ============================================
+
+// Wyłącz Firebase jeśli masz problemy z bazą danych
+// window.DISABLE_FIREBASE = true;
+
+// ============================================
 // AUDIO ENGINE
 // ============================================
 const SFX = {
@@ -5008,9 +5015,21 @@ window.syncFromFirebase = async function() {
 
 // Initialize Firebase when page loads
 setTimeout(() => {
+  // Check if Firebase should be disabled
+  if (window.DISABLE_FIREBASE) {
+    console.log('🔥 Firebase disabled by user');
+    window.firebaseInitialized = false;
+    updateDatabaseStatus(false);
+    return;
+  }
+  
   initializeFirebase().then(() => {
     // Integrate with existing functions after a delay
     setTimeout(integrateFirebaseWithExistingFunctions, 2000);
+  }).catch(() => {
+    console.log('🔥 Firebase failed - running in localStorage mode');
+    window.firebaseInitialized = false;
+    updateDatabaseStatus(false);
   });
 }, 3000);
 
