@@ -2258,19 +2258,19 @@ function renderAll() {
 // INFO CARDS
 // ============================================
 function getInfoCards() {
-  const saved = localStorage.getItem('rp_info_cards');
+  const saved = localStorage.getItem('rp_info');
   if (saved) return JSON.parse(saved);
   
   const defaults = [
     { id: 1, title: 'OPERACJA ALPHA', content: 'Status: W trakcie realizacji. Wszystkie zespoły na pozycjach.' },
     { id: 2, title: 'RAPORT DZIENNY', content: 'Brak incydentów. Systemy działają prawidłowo.' }
   ];
-  localStorage.setItem('rp_info_cards', JSON.stringify(defaults));
+  localStorage.setItem('rp_info', JSON.stringify(defaults));
   return defaults;
 }
 
 function saveInfoCards(cards) {
-  localStorage.setItem('rp_info_cards', JSON.stringify(cards));
+  localStorage.setItem('rp_info', JSON.stringify(cards));
   
   // Save to Firebase
   if (window.saveToFirebase) {
@@ -3156,7 +3156,7 @@ function resetData(type) {
   showConfirmDialog('RESET DANYCH', messages[type], () => {
     switch (type) {
       case 'info':
-        localStorage.removeItem('rp_info_cards');
+        localStorage.removeItem('rp_info');
         renderInfoCards();
         break;
       case 'patients':
@@ -3173,7 +3173,7 @@ function resetData(type) {
         document.getElementById('xyz-notes').textContent = 'Projekt w fazie zaawansowanej. Wszystkie parametry w normie. Kontynuacja zgodnie z harmonogramem.';
         break;
       case 'all':
-        localStorage.removeItem('rp_info_cards');
+        localStorage.removeItem('rp_info');
         localStorage.removeItem('rp_patients');
         localStorage.removeItem('rp_files');
         localStorage.removeItem('rp_xyz_notes');
@@ -4710,6 +4710,30 @@ async function initializeFirebase() {
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     window.db = firebase.database();
+    
+    // Test connection
+    console.log('🔥 Testing Firebase connection...');
+    const testRef = window.db.ref('.info/connected');
+    
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Firebase connection timeout'));
+      }, 10000); // 10 second timeout
+      
+      testRef.once('value', (snapshot) => {
+        clearTimeout(timeout);
+        if (snapshot.val() === true) {
+          console.log('🔥 Firebase connection test successful');
+          resolve();
+        } else {
+          reject(new Error('Firebase not connected'));
+        }
+      }, (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+    });
+    
     window.firebaseInitialized = true;
     
     console.log('🔥 Firebase initialized successfully');
@@ -4730,11 +4754,27 @@ async function initializeFirebase() {
     
   } catch (error) {
     console.error('❌ Firebase initialization failed:', error);
+    console.error('❌ Error details:', error.message);
+    
+    // Check specific error types
+    if (error.message.includes('404')) {
+      console.error('❌ Firebase database not found - check URL and region');
+      notify('Błąd Firebase: Baza danych nie znaleziona', 'error');
+    } else if (error.message.includes('403')) {
+      console.error('❌ Firebase permission denied - check security rules');
+      notify('Błąd Firebase: Brak uprawnień - sprawdź reguły bezpieczeństwa', 'error');
+    } else if (error.message.includes('timeout')) {
+      console.error('❌ Firebase connection timeout - check internet connection');
+      notify('Błąd Firebase: Timeout połączenia', 'error');
+    } else {
+      notify('Błąd Firebase: ' + error.message, 'error');
+    }
+    
     window.firebaseInitialized = false;
     
     setTimeout(() => {
-      notify('Błąd połączenia z bazą danych - tryb offline', 'error');
-    }, 2000);
+      notify('Aplikacja działa w trybie offline (localStorage)', 'error');
+    }, 3000);
   }
 }
 
@@ -4807,7 +4847,7 @@ function setupRealtimeListeners() {
       
       // Refresh UI if we're on the info tab
       if (document.querySelector('#tab-info.active')) {
-        loadInfoCards();
+        renderInfoCards();
       }
     }
   });
@@ -4821,7 +4861,7 @@ function setupRealtimeListeners() {
       
       // Refresh UI if we're on the medical tab
       if (document.querySelector('#tab-med.active')) {
-        loadPatients();
+        renderPatients();
       }
     }
   });
@@ -4835,7 +4875,7 @@ function setupRealtimeListeners() {
       
       // Refresh UI if we're on the files tab
       if (document.querySelector('#tab-files.active')) {
-        loadFiles();
+        renderFiles();
       }
     }
   });
@@ -4883,7 +4923,7 @@ function setupRealtimeListeners() {
       
       // Refresh users list if we're on the users tab
       if (document.querySelector('#tab-users.active')) {
-        loadUsers();
+        renderUsers();
       }
     }
   });
