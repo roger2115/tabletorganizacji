@@ -3826,16 +3826,16 @@ function showConfirmDialog(title, message, callback) {
 
 function showInputDialog(title, message, inputType = 'text', defaultValue = '', callback) {
   const inputField = inputType === 'password' ? 
-    `<input type="password" id="dialog-input" placeholder="Wprowadź hasło" style="width: 100%; padding: 0.75rem; background: var(--dark); border: 1px solid var(--border); color: #fff; margin-top: 1rem;">` :
+    `<input type="password" id="dialog-input" placeholder="Wprowadź hasło" value="${defaultValue}" style="width: 100%; padding: 0.75rem; background: var(--dark); border: 1px solid var(--border); color: #fff; margin-top: 1rem; font-family: 'Rajdhani', sans-serif;">` :
     inputType === 'number' ?
-    `<input type="number" id="dialog-input" value="${defaultValue}" style="width: 100%; padding: 0.75rem; background: var(--dark); border: 1px solid var(--border); color: #fff; margin-top: 1rem;">` :
-    `<input type="text" id="dialog-input" value="${defaultValue}" style="width: 100%; padding: 0.75rem; background: var(--dark); border: 1px solid var(--border); color: #fff; margin-top: 1rem;">`;
+    `<input type="number" id="dialog-input" value="${defaultValue}" min="0" style="width: 100%; padding: 0.75rem; background: var(--dark); border: 1px solid var(--border); color: #fff; margin-top: 1rem; font-family: 'Rajdhani', sans-serif;">` :
+    `<input type="text" id="dialog-input" value="${defaultValue}" placeholder="Wprowadź tekst" style="width: 100%; padding: 0.75rem; background: var(--dark); border: 1px solid var(--border); color: #fff; margin-top: 1rem; font-family: 'Rajdhani', sans-serif;">`;
 
   const modalHtml = `
     <div class="enhanced-modal">
       <div class="modal-header">${title}</div>
       <div class="modal-body">
-        <p style="margin-bottom: 1rem; white-space: pre-line;">${message}</p>
+        <p style="margin-bottom: 1rem; white-space: pre-line; color: #ccc;">${message}</p>
         ${inputField}
       </div>
       <div class="modal-footer">
@@ -3855,10 +3855,24 @@ function showInputDialog(title, message, inputType = 'text', defaultValue = '', 
     const input = document.getElementById('dialog-input');
     if (input) {
       input.focus();
+      input.select(); // Select all text for easier editing
+      
       input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
+          e.preventDefault();
           confirmDialog();
         }
+      });
+      
+      // Style focus
+      input.addEventListener('focus', () => {
+        input.style.borderColor = 'var(--cyan)';
+        input.style.boxShadow = '0 0 10px rgba(0, 229, 204, 0.3)';
+      });
+      
+      input.addEventListener('blur', () => {
+        input.style.borderColor = 'var(--border)';
+        input.style.boxShadow = 'none';
       });
     }
   }, 100);
@@ -3950,7 +3964,7 @@ function removeYouTubePlayer() {
 // ============================================
 function startAimlab() {
   const modalHtml = `
-    <div class="enhanced-modal" style="min-width: 700px;">
+    <div class="enhanced-modal" style="min-width: 800px;">
       <div class="modal-header">AIMLAB - TRENING CELNOŚCI</div>
       <div class="modal-body">
         <div id="aimlab-game-container">
@@ -3964,8 +3978,52 @@ function startAimlab() {
             <div id="aimlab-instructions" style="color: #ccc; margin-bottom: 1rem;">
               Klikaj w czerwone cele aby zdobywać punkty!
             </div>
-            <button id="aimlab-start" class="btn-primary" onclick="initAimlab()">START TRENINGU</button>
-            <button id="aimlab-restart" class="btn-secondary" onclick="restartAimlab()" style="display: none;">RESTART</button>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem;">
+              <button id="aimlab-start" class="btn-primary" onclick="initAimlab()">START TRENINGU</button>
+              <button id="aimlab-restart" class="btn-secondary" onclick="restartAimlab()" style="display: none;">RESTART</button>
+              <button id="aimlab-settings" class="btn-secondary" onclick="showAimlabSettings()">USTAWIENIA</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Settings Panel -->
+        <div id="aimlab-settings-panel" style="display: none; margin-top: 2rem; padding: 1.5rem; background: var(--dark-panel); border: 1px solid var(--border);">
+          <h3 style="color: var(--cyan); margin-bottom: 1rem;">USTAWIENIA TRENINGU</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-field">
+              <label>Czas treningu (sekundy)</label>
+              <input type="number" id="aimlab-duration" min="10" max="300" value="30" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); color: #fff;">
+            </div>
+            <div class="form-field">
+              <label>Maksymalna liczba celów</label>
+              <input type="number" id="aimlab-max-targets" min="1" max="10" value="3" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); color: #fff;">
+            </div>
+            <div class="form-field">
+              <label>Rozmiar celów (px)</label>
+              <input type="number" id="aimlab-target-size" min="15" max="80" value="30" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); color: #fff;">
+            </div>
+            <div class="form-field">
+              <label>Prędkość pojawiania (ms)</label>
+              <input type="number" id="aimlab-spawn-speed" min="500" max="5000" step="100" value="2000" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); color: #fff;">
+            </div>
+            <div class="form-field">
+              <label>Czas życia celu (ms)</label>
+              <input type="number" id="aimlab-target-life" min="1000" max="10000" step="100" value="3000" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); color: #fff;">
+            </div>
+            <div class="form-field">
+              <label>Tryb gry</label>
+              <select id="aimlab-game-mode" style="width: 100%; padding: 0.5rem; background: var(--dark); border: 1px solid var(--border); color: #fff;">
+                <option value="classic">Klasyczny</option>
+                <option value="speed">Szybki</option>
+                <option value="precision">Precyzyjny</option>
+                <option value="endurance">Wytrzymałościowy</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center;">
+            <button class="btn-primary" onclick="applyAimlabSettings()">ZASTOSUJ</button>
+            <button class="btn-secondary" onclick="resetAimlabSettings()">RESET</button>
+            <button class="btn-secondary" onclick="hideAimlabSettings()">ZAMKNIJ</button>
           </div>
         </div>
       </div>
@@ -3976,6 +4034,7 @@ function startAimlab() {
   `;
   
   showEnhancedModal(modalHtml);
+  loadAimlabSettings();
   playSound('open');
 }
 
@@ -3996,11 +4055,13 @@ function initAimlab() {
     score: 0,
     shots: 0,
     hits: 0,
-    timeLeft: 30,
+    timeLeft: aimlabSettings.duration,
     gameRunning: true,
-    targetSize: 30,
-    targetSpeed: 2000, // ms between targets
-    maxTargets: 3
+    targetSize: aimlabSettings.targetSize,
+    targetSpeed: aimlabSettings.spawnSpeed,
+    maxTargets: aimlabSettings.maxTargets,
+    targetLife: aimlabSettings.targetLife,
+    gameMode: aimlabSettings.gameMode
   };
   
   // Event listeners
@@ -4049,6 +4110,108 @@ function initAimlab() {
   startTargetSpawner();
   startGameTimer();
   aimlabGameLoop();
+}
+
+// ============================================
+// AIMLAB SETTINGS
+// ============================================
+let aimlabSettings = {
+  duration: 30,
+  maxTargets: 3,
+  targetSize: 30,
+  spawnSpeed: 2000,
+  targetLife: 3000,
+  gameMode: 'classic'
+};
+
+function showAimlabSettings() {
+  const panel = document.getElementById('aimlab-settings-panel');
+  if (panel) {
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    playSound('click');
+  }
+}
+
+function hideAimlabSettings() {
+  const panel = document.getElementById('aimlab-settings-panel');
+  if (panel) {
+    panel.style.display = 'none';
+    playSound('click');
+  }
+}
+
+function loadAimlabSettings() {
+  const saved = localStorage.getItem('rp_aimlab_settings');
+  if (saved) {
+    try {
+      aimlabSettings = { ...aimlabSettings, ...JSON.parse(saved) };
+    } catch (e) {
+      console.error('Failed to load Aimlab settings:', e);
+    }
+  }
+  
+  // Update UI
+  setTimeout(() => {
+    document.getElementById('aimlab-duration').value = aimlabSettings.duration;
+    document.getElementById('aimlab-max-targets').value = aimlabSettings.maxTargets;
+    document.getElementById('aimlab-target-size').value = aimlabSettings.targetSize;
+    document.getElementById('aimlab-spawn-speed').value = aimlabSettings.spawnSpeed;
+    document.getElementById('aimlab-target-life').value = aimlabSettings.targetLife;
+    document.getElementById('aimlab-game-mode').value = aimlabSettings.gameMode;
+  }, 100);
+}
+
+function applyAimlabSettings() {
+  aimlabSettings = {
+    duration: parseInt(document.getElementById('aimlab-duration').value) || 30,
+    maxTargets: parseInt(document.getElementById('aimlab-max-targets').value) || 3,
+    targetSize: parseInt(document.getElementById('aimlab-target-size').value) || 30,
+    spawnSpeed: parseInt(document.getElementById('aimlab-spawn-speed').value) || 2000,
+    targetLife: parseInt(document.getElementById('aimlab-target-life').value) || 3000,
+    gameMode: document.getElementById('aimlab-game-mode').value || 'classic'
+  };
+  
+  // Apply game mode modifiers
+  switch(aimlabSettings.gameMode) {
+    case 'speed':
+      aimlabSettings.spawnSpeed = Math.max(500, aimlabSettings.spawnSpeed * 0.6);
+      aimlabSettings.targetLife = Math.max(1000, aimlabSettings.targetLife * 0.7);
+      break;
+    case 'precision':
+      aimlabSettings.targetSize = Math.max(15, aimlabSettings.targetSize * 0.7);
+      aimlabSettings.targetLife = Math.min(8000, aimlabSettings.targetLife * 1.5);
+      break;
+    case 'endurance':
+      aimlabSettings.duration = Math.min(600, aimlabSettings.duration * 2);
+      aimlabSettings.maxTargets = Math.min(8, aimlabSettings.maxTargets + 2);
+      break;
+  }
+  
+  localStorage.setItem('rp_aimlab_settings', JSON.stringify(aimlabSettings));
+  
+  // Save to Firebase
+  if (window.saveToFirebase) {
+    window.saveToFirebase('rp_aimlab_settings', aimlabSettings);
+  }
+  
+  hideAimlabSettings();
+  notify('Ustawienia Aimlab zapisane');
+  playSound('save');
+}
+
+function resetAimlabSettings() {
+  aimlabSettings = {
+    duration: 30,
+    maxTargets: 3,
+    targetSize: 30,
+    spawnSpeed: 2000,
+    targetLife: 3000,
+    gameMode: 'classic'
+  };
+  
+  loadAimlabSettings();
+  notify('Ustawienia zresetowane');
+  playSound('click');
 }
 
 function aimlabGameLoop() {
@@ -4134,8 +4297,8 @@ function startTargetSpawner() {
         x: margin + Math.random() * (aimlabGame.canvas.width - 2 * margin),
         y: margin + Math.random() * (aimlabGame.canvas.height - 2 * margin),
         size: aimlabGame.targetSize + Math.random() * 20 - 10,
-        life: 3000, // 3 seconds
-        maxLife: 3000,
+        life: aimlabGame.targetLife,
+        maxLife: aimlabGame.targetLife,
         points: Math.floor(Math.random() * 50) + 10
       };
       
