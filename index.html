@@ -1,0 +1,1695 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE REGIME — TERMINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --noir:    #0a0a0a;
+  --panel:   #111111;
+  --border:  #2a2a2a;
+  --border2: #3a3a3a;
+  --accent:  #c8a96e;
+  --accent2: #e8c98e;
+  --red:     #8b1a1a;
+  --red2:    #c0392b;
+  --text:    #b0a090;
+  --dim:     #4a4540;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Share Tech Mono', monospace;
+  background: var(--noir);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh; width: 100vw;
+}
+.scanlines {
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg,
+    rgba(0,0,0,0.12) 0px, transparent 1px,
+    transparent 2px, rgba(0,0,0,0.12) 3px);
+  pointer-events: none; z-index: 9999; opacity: 0.5;
+  animation: scanlineScroll 8s linear infinite;
+}
+@keyframes scanlineScroll {
+  0%{background-position:0 0} 100%{background-position:0 100px}
+}
+.vignette {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.75) 100%);
+  pointer-events: none; z-index: 9998;
+}
+
+/* ===== PASSWORD SCREEN ===== */
+#pass-screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  background: radial-gradient(ellipse at center, #1a1510 0%, #0d0b08 55%, #050505 100%);
+  z-index: 1000;
+}
+/* Animated grid background on password screen */
+#pass-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(200,169,110,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,169,110,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridPulse 6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes gridPulse {
+  0%,100%{opacity:0.5} 50%{opacity:1}
+}
+.corp-sub {
+  font-size: 10px; letter-spacing: 6px; color: var(--dim);
+  margin-bottom: 3rem; text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+.pass-label {
+  font-size: 10px; letter-spacing: 4px; color: var(--dim);
+  margin-bottom: 0.7rem; text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+/* Corner bracket animation on pass-row */
+.pass-row {
+  display: flex; border: 1px solid var(--border2);
+  background: rgba(0,0,0,0.5);
+  position: relative; z-index: 1;
+}
+.pass-row::before,
+.pass-row::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  border-color: var(--accent);
+  border-style: solid;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  animation: bracketPulse 3s ease-in-out infinite;
+}
+.pass-row::before {
+  top: -4px; left: -4px;
+  border-width: 2px 0 0 2px;
+}
+.pass-row::after {
+  bottom: -4px; right: -4px;
+  border-width: 0 2px 2px 0;
+}
+.pass-row:focus-within::before,
+.pass-row:focus-within::after {
+  border-color: var(--accent2);
+  box-shadow: 0 0 10px rgba(232,201,142,0.5);
+  animation: none;
+}
+@keyframes bracketPulse {
+  0%,100%{opacity:0.4;border-color:var(--accent)} 50%{opacity:1;border-color:var(--accent2)}
+}
+.pass-row input {
+  background: transparent; border: none;
+  color: var(--accent2); font-family: 'Share Tech Mono', monospace;
+  font-size: 15px; padding: 0.8rem 1.25rem;
+  width: 340px; outline: none; letter-spacing: 2px;
+  transition: box-shadow 0.4s;
+}
+.pass-row input:focus {
+  box-shadow: inset 0 0 0 1px rgba(232,201,142,0.2),
+              0 0 0 2px rgba(200,169,110,0.08),
+              0 0 20px rgba(200,169,110,0.12);
+  animation: borderGlow 2s linear infinite;
+}
+@keyframes borderGlow {
+  0%  {box-shadow: inset 0 0 0 1px rgba(232,201,142,0.15), 0 0 8px rgba(200,169,110,0.1)}
+  25% {box-shadow: inset 0 0 0 1px rgba(232,201,142,0.4),  0 0 16px rgba(200,169,110,0.25)}
+  50% {box-shadow: inset 0 0 0 1px rgba(232,201,142,0.15), 0 0 8px rgba(200,169,110,0.1)}
+  75% {box-shadow: inset 0 0 0 1px rgba(232,201,142,0.4),  0 0 16px rgba(200,169,110,0.25)}
+  100%{box-shadow: inset 0 0 0 1px rgba(232,201,142,0.15), 0 0 8px rgba(200,169,110,0.1)}
+}
+.pass-row input::placeholder { color: var(--dim); letter-spacing: 1px; font-size: 13px; }
+.pass-btn {
+  background: transparent; border: none;
+  border-left: 1px solid var(--border2); color: var(--dim);
+  padding: 0.8rem 1.1rem; cursor: pointer; font-size: 18px; transition: all 0.2s;
+}
+.pass-btn:hover { color: var(--accent2); background: rgba(200,169,110,0.08); }
+.pass-divider {
+  width: 340px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+  margin-top: 2.5rem;
+  position: relative; z-index: 1;
+}
+
+/* ===== LOGO FLOAT ===== */
+@keyframes logoFloat {
+  0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)}
+}
+.logo-svg {
+  margin-bottom: 1.5rem; opacity: 0.85;
+  filter: drop-shadow(0 0 18px rgba(200,169,110,0.25));
+  animation: logoFloat 4s ease-in-out infinite;
+  position: relative; z-index: 1;
+}
+
+/* ===== ERROR OVERLAY ===== */
+#error-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.97);
+  z-index: 2000; display: none;
+  flex-direction: column; justify-content: center; align-items: center; gap: 1.2rem;
+}
+#error-overlay.active { display: flex; }
+.error-big {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(70px, 14vw, 130px); font-weight: 700; letter-spacing: 10px;
+  color: var(--red2);
+  text-shadow: 0 0 40px rgba(192,57,43,0.9), 0 0 100px rgba(192,57,43,0.4);
+  animation: errFlicker 0.12s infinite;
+}
+@keyframes errFlicker {
+  0%,100%{opacity:1;transform:skewX(0deg) scaleX(1)}
+  8%{opacity:0.7;transform:skewX(-3deg) scaleX(1.01)}
+  16%{opacity:1;transform:skewX(2deg) scaleX(0.99)}
+  45%{opacity:0.85;transform:skewX(0deg)}
+  72%{opacity:0.6;transform:skewX(3deg) scaleX(1.02)}
+}
+.error-sub {
+  font-size: 12px; color: var(--accent); letter-spacing: 4px;
+  text-transform: uppercase; animation: pulse 0.6s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+.error-bars { display: flex; gap: 5px; margin: 0.5rem 0; }
+.error-bar {
+  width: 5px; background: var(--red2);
+  animation: barAnim 0.35s infinite; box-shadow: 0 0 8px var(--red2);
+}
+.error-bar:nth-child(1){height:18px;animation-delay:0s}
+.error-bar:nth-child(2){height:36px;animation-delay:.05s}
+.error-bar:nth-child(3){height:56px;animation-delay:.1s}
+.error-bar:nth-child(4){height:72px;animation-delay:.15s}
+.error-bar:nth-child(5){height:56px;animation-delay:.2s}
+.error-bar:nth-child(6){height:36px;animation-delay:.25s}
+.error-bar:nth-child(7){height:18px;animation-delay:.3s}
+@keyframes barAnim {
+  0%,100%{opacity:1;transform:scaleY(1)} 50%{opacity:0.2;transform:scaleY(0.3)}
+}
+.error-code { font-size: 10px; color: var(--dim); letter-spacing: 2px; max-width: 500px; text-align: center; }
+.error-progress-wrap { width: 420px; margin-top: 0.75rem; }
+.error-progress-label {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--accent); letter-spacing: 2px; margin-bottom: 0.4rem;
+}
+.error-progress-bar { height: 3px; background: #1a1008; border: 1px solid var(--red); }
+.error-progress-fill { height: 100%; background: var(--red2); width: 0%; box-shadow: 0 0 8px var(--red2); }
+
+/* ===== HACK SCREENS SHARED ===== */
+.hack-screen-wrap {
+  position: fixed; inset: 0; display: none;
+  z-index: 1500; background: #080806;
+  flex-direction: column;
+}
+.hack-screen-wrap.active { display: flex; }
+.hack-bar {
+  background: #0d0c0a; border-bottom: 1px solid var(--border2);
+  padding: 0.55rem 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; font-size: 10px; letter-spacing: 2px;
+  position: relative;
+}
+/* Pulsing left border glow on hack bar */
+.hack-bar::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  animation: hackBarGlow 1.8s ease-in-out infinite;
+}
+@keyframes hackBarGlow {
+  0%,100%{box-shadow:0 0 4px var(--accent);opacity:0.5}
+  50%{box-shadow:0 0 14px var(--accent2),0 0 28px rgba(200,169,110,0.3);opacity:1}
+}
+.hack-bar-left { color: var(--accent); }
+.hack-bar-right { display: flex; gap: 1rem; align-items: center; }
+.hack-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--red2);
+  display: inline-block; margin-right: 5px;
+  animation: pulse 0.8s infinite; box-shadow: 0 0 5px var(--red2);
+}
+.hack-status-text { color: var(--red2); animation: pulse 1.2s infinite; }
+.hack-btn-fail {
+  background: transparent; border: 1px solid var(--red2); color: var(--red2);
+  font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 0.35rem 1rem; cursor: pointer; transition: all 0.2s;
+}
+.hack-btn-fail:hover { background: rgba(192,57,43,0.1); }
+
+/* ===== SHARED HACK GAME BOX ===== */
+.hack-game-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.hack-game-box {
+  background-color: #0d0c0a !important;
+  padding: 10px; position: relative;
+  border: 1px solid var(--border2);
+}
+.hack-game-info {
+  font-size: 20px; display: flex; height: 310px;
+  justify-content: space-around; transform: translateY(100%); text-align: center;
+}
+.hack-game-info h2 {
+  font-size: 13px; font-weight: 500;
+  font-family: 'Share Tech Mono', monospace; letter-spacing: 3px;
+  color: var(--accent2) !important;
+}
+.hack-game-text {
+  display: flex; justify-content: space-around; transform: translateY(100%);
+  text-align: center; flex-direction: column; margin-top: -20px;
+}
+.hack-game-text h2 {
+  font-size: 16px; font-weight: 600;
+  font-family: 'Share Tech Mono', monospace; letter-spacing: 3px;
+  color: var(--accent2) !important;
+}
+.hack-game-start {
+  margin-bottom: 20px; display: flex; border: none !important;
+  background-color: #1a1810 !important; padding: 15px;
+  color: var(--accent2) !important; cursor: pointer; border-radius: 0 !important;
+  font-size: 13px; text-align: center; justify-content: space-around;
+  transition: all .2s; letter-spacing: 3px; text-transform: uppercase;
+  font-family: 'Share Tech Mono', monospace !important;
+  border: 1px solid var(--border2) !important;
+}
+.hack-game-start:hover {
+  background-color: #2a2010 !important;
+  color: var(--accent2) !important;
+  box-shadow: 0 0 20px rgba(200,169,110,0.15);
+}
+.hack-game-footer {
+  position: absolute; bottom: 10px;
+}
+.hack-game-footer .progressBox { height: 4px; width: 100%; background-color: #1a1810; border-radius: 0; }
+.hack-game-footer .progressBox .progressBar {
+  height: 4px; background-color: var(--accent) !important;
+  border-radius: 0; box-shadow: 0 0 6px var(--accent);
+}
+.hack-container {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0; user-select: none; position: relative;
+  align-content: center; height: 100%;
+}
+
+/* ===== HACK1 SPECIFIC ===== */
+#hack-game-area .hack-game-box { width: 720px; height: 720px; }
+#hack-game-area .hack-game-footer { width: 720px; }
+#hack-game-area .hackFunction { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(6, auto); place-items: center; gap: 15px; width: 550px; margin: 0 auto; margin-top: 80px; z-index: 2; }
+#hack-game-area .hackFunction .el { color: var(--accent) !important; font-size: 10px; width: 80px; height: 80px; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); padding: 5px; box-sizing: border-box; z-index: 3; transition: background-color .05s; justify-content: center; align-items: center; align-content: center; justify-items: center; }
+#hack-game-area .hackFunction .el .smallel { display: flex; aspect-ratio: 1/1; flex-direction: column; justify-content: center; align-items: center; text-align: center; width: 40px; height: 40px; background: rgba(20,18,12,0.8) !important; border: 1px solid #3a3020 !important; font-size: 16px; font-weight: bold; color: var(--accent) !important; }
+#hack-game-area .hackFunction .el .smallel.checked { background-color: rgba(200,169,110,0.25) !important; border: 1px solid var(--accent) !important; color: var(--accent2) !important; }
+#hack-game-area .hackFunction .el:not(.aha):not(.block) .smallel:hover { background-color: rgba(200,169,110,0.2) !important; border: 1px solid var(--accent) !important; cursor: pointer; }
+#hack-game-area .hackFunction .el:first-child { position: relative; top: 40px; }
+#hack-game-area .hackFunction .el:first-child::after { content: ""; position: relative; width: 2px; height: 83px; left: -28px; bottom: 83px; background-color: var(--border2); }
+#hack-game-area .hackFunction .el:last-child { position: relative; justify-items: end; left: -20px; }
+#hack-game-area .hackFunction .el:last-child::after { content: ""; position: relative; width: 84px; height: 2px; left: 42px; top: 7px; background-color: var(--border2); }
+
+/* ===== LOCKOUT SCREEN ===== */
+#lockout-screen {
+  position: fixed; inset: 0; background: #000;
+  z-index: 3000; display: none;
+  flex-direction: column; justify-content: center; align-items: center; gap: 1.5rem;
+}
+#lockout-screen.active { display: flex; }
+.lockout-static {
+  position: fixed; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(192,57,43,0.04) 0px, transparent 2px, transparent 4px);
+  animation: staticAnim 0.07s infinite;
+}
+@keyframes staticAnim {
+  0%{transform:translateY(0)} 25%{transform:translateY(-2px)}
+  50%{transform:translateY(1px)} 75%{transform:translateY(-1px)} 100%{transform:translateY(0)}
+}
+/* Glitch line sweep */
+.glitch-line {
+  position: fixed; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(192,57,43,0.8), transparent);
+  pointer-events: none; z-index: 10;
+  animation: glitchSweep 4s ease-in-out infinite;
+}
+@keyframes glitchSweep {
+  0%{top:-2px;opacity:0} 5%{opacity:1} 50%{top:100vh;opacity:0.6} 55%{opacity:0} 100%{top:100vh;opacity:0}
+}
+.lockout-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(50px, 10vw, 100px); font-weight: 700; letter-spacing: 8px;
+  color: var(--red2); text-shadow: 0 0 30px rgba(192,57,43,0.8);
+  animation: errFlicker 0.15s infinite; position: relative; z-index: 1;
+}
+.lockout-sub {
+  font-size: 12px; color: var(--accent); letter-spacing: 4px;
+  text-transform: uppercase; text-align: center; max-width: 520px;
+  line-height: 2.2; position: relative; z-index: 1;
+}
+.lockout-code {
+  font-size: 10px; color: var(--dim); letter-spacing: 3px;
+  text-align: center; position: relative; z-index: 1;
+}
+.lockout-shutdown {
+  font-size: 10px; color: #333; letter-spacing: 2px;
+  position: relative; z-index: 1; margin-top: 1rem;
+  animation: pulse 2s infinite;
+}
+
+/* ===== HACK2 SPECIFIC ===== */
+#hack2-game-area .hack-game-box { width: 1248px; height: 680px; }
+#hack2-game-area .hack-game-footer { width: 1248px; }
+#hack2-game-area .hack-game-info { margin-top: -15px; }
+#hack2-game-area .hackFunction { display: flex; gap: 154px; position: relative; bottom: -300px; left: 150px; }
+#hack2-game-area .hackFunction > div { width: 220px; height: 500px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; z-index: 2; bottom: 150px; position: relative; }
+#hack2-game-area .hackFunction > div#h2-b { position: relative; left: -8px; }
+#hack2-game-area .hackFunction > div .cube { margin: 1px; border-radius: 20px; height: 40px; border: 1px solid var(--accent); cursor: grab; }
+#hack2-game-area .hackFunction > div #tower_1  { width: 80px;  background-color: #3a2a10; }
+#hack2-game-area .hackFunction > div #tower_2  { width: 100px; background-color: #3f2e12; }
+#hack2-game-area .hackFunction > div #tower_3  { width: 120px; background-color: #443214; }
+#hack2-game-area .hackFunction > div #tower_4  { width: 140px; background-color: #4a3616; }
+#hack2-game-area .hackFunction > div #tower_5  { width: 160px; background-color: #4f3a18; }
+#hack2-game-area .hackFunction > div #tower_6  { width: 180px; background-color: #543e1a; }
+#hack2-game-area .hackFunction > div #tower_7  { width: 200px; background-color: #59421c; }
+#hack2-game-area .hackFunction > div #tower_8  { width: 220px; background-color: #5e461e; }
+#hack2-game-area .hackFunction2 { margin-top: 15px; display: flex; flex-direction: row; justify-content: center; align-items: center; }
+#hack2-game-area .hackFunction2 input { width: 20px; border: 1px solid var(--accent); outline: none; height: 48px; color: var(--accent2); padding: 5px 12px; margin: 5px; border-radius: 18px; font-size: 24px; font-weight: 600; background: transparent; text-align: center; }
+#hack2-game-area #h2-a1,#hack2-game-area #h2-a2,#hack2-game-area #h2-a3 { position: absolute; background: transparent; border-left: 1px solid var(--accent); border-top: 1px solid var(--accent); border-right: 1px solid var(--accent); border-top-left-radius: 60px; border-top-right-radius: 60px; opacity: 0.25; width: 30px; height: 450px; bottom: 78px; z-index: 1; }
+#hack2-game-area #h2-a1 { left: 255px; } #hack2-game-area #h2-a2 { left: 620px; } #hack2-game-area #h2-a3 { left: 1000px; }
+
+/* ===== HACK3 SPECIFIC ===== */
+#hack3-screen { z-index: 5500; }
+#hack3-game-area .hack-game-box { width: 720px; height: 720px; }
+#hack3-game-area .hack-game-footer { width: 720px; }
+#hack3-game-area .hack-game-text { margin-top: -5px; }
+#hack3-game-area .hackFunction { position: absolute; display: block; width: 720px; height: 600px; margin: 0 auto; margin-top: 50px; overflow: hidden; z-index: 2; }
+#hack3-game-area .hackFunction .circle { position: relative; background: var(--accent2); border-radius: 10px; border: 1px solid #000; top: 45%; left: 10px; width: 8px; height: 8px; box-shadow: 0 0 8px var(--accent); }
+#hack3-game-area .hackFunction .allLine { position: absolute; }
+#hack3-game-area .hackFunction .allLine#line1{left:110px} #hack3-game-area .hackFunction .allLine#line2{left:145px}
+#hack3-game-area .hackFunction .allLine#line3{left:180px} #hack3-game-area .hackFunction .allLine#line4{left:215px}
+#hack3-game-area .hackFunction .allLine#line5{left:250px} #hack3-game-area .hackFunction .allLine#line6{left:285px}
+#hack3-game-area .hackFunction .allLine#line7{left:320px} #hack3-game-area .hackFunction .allLine#line8{left:355px}
+#hack3-game-area .hackFunction .allLine#line9{left:390px} #hack3-game-area .hackFunction .allLine#line10{left:425px}
+#hack3-game-area .hackFunction .allLine#line11{left:460px} #hack3-game-area .hackFunction .allLine#line12{left:495px}
+#hack3-game-area .hackFunction .allLine#line13{left:530px} #hack3-game-area .hackFunction .allLine#line14{left:565px}
+#hack3-game-area .hackFunction .allLine#line15{left:600px}
+#hack3-game-area .hackFunction .allLine .line { position: relative; width: 13px; height: 500px; background-color: var(--color); opacity: 0.7; }
+#hack3-game-area .hackFunction .allLine .line.up { top: 0px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; }
+#hack3-game-area .hackFunction .allLine .line.down { bottom: -120px; border-top-right-radius: 10px; border-top-left-radius: 10px; }
+
+/* ===== MAIN TABLET ===== */
+#tablet {
+  display: none; height: 100vh; flex-direction: column; background: var(--noir);
+}
+#tablet.active { display: flex; }
+
+/* Topbar with shimmer on bottom border */
+.topbar {
+  background: var(--panel);
+  padding: 0.85rem 2rem;
+  display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  position: relative;
+}
+.topbar::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,
+    var(--border2) 0%, var(--accent) 30%, var(--accent2) 50%, var(--accent) 70%, var(--border2) 100%);
+  background-size: 200% 100%;
+  animation: topbarShimmer 4s linear infinite;
+}
+@keyframes topbarShimmer {
+  0%{background-position:200% 0} 100%{background-position:-200% 0}
+}
+.topbar-title {
+  font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700;
+  color: var(--accent2); letter-spacing: 6px; text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(200,169,110,0.3);
+}
+.topbar-right { display: flex; gap: 1.5rem; align-items: center; }
+.topbar-status { font-size: 10px; color: var(--dim); letter-spacing: 2px; }
+.topbar-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+  display: inline-block; margin-right: 5px; animation: pulse 2.5s infinite;
+  box-shadow: 0 0 5px var(--accent);
+}
+.tabs {
+  background: var(--panel); border-bottom: 1px solid var(--border); display: flex; flex-shrink: 0;
+}
+/* Tab button with animated underline sweep */
+.tab-btn {
+  padding: 0.7rem 2rem; background: transparent; border: none;
+  border-right: 1px solid var(--border); color: var(--dim); cursor: pointer;
+  font-family: 'Share Tech Mono', monospace; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s, background 0.2s;
+  position: relative; overflow: hidden;
+}
+.tab-btn::after {
+  content: '';
+  position: absolute; bottom: 0; left: -100%; width: 100%; height: 2px;
+  background: var(--accent);
+  transition: left 0.3s ease;
+}
+.tab-btn:hover { color: var(--text); background: rgba(200,169,110,0.04); }
+.tab-btn:hover::after { left: 0; }
+.tab-btn.active { color: var(--accent2); background: rgba(200,169,110,0.06); }
+.tab-btn.active::after { left: 0; background: var(--accent2); }
+.content {
+  flex: 1; overflow-y: auto; padding: 2rem;
+  scrollbar-width: thin; scrollbar-color: var(--border2) var(--panel);
+}
+.content::-webkit-scrollbar { width: 3px; }
+.content::-webkit-scrollbar-track { background: var(--panel); }
+.content::-webkit-scrollbar-thumb { background: var(--border2); }
+.tab-panel { display: none; animation: fadeIn 0.35s; }
+.tab-panel.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* Section title with animated left accent line */
+.sec-title {
+  font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700;
+  color: var(--accent2); letter-spacing: 5px; text-transform: uppercase;
+  margin-bottom: 0.4rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
+  position: relative; padding-left: 1rem;
+}
+.sec-title::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0.6rem;
+  width: 3px; background: var(--accent2);
+  transform: scaleY(0); transform-origin: top;
+  animation: accentLineGrow 0.5s ease forwards;
+}
+.tab-panel.active .sec-title::before {
+  animation: accentLineGrow 0.5s ease forwards;
+}
+@keyframes accentLineGrow {
+  from{transform:scaleY(0)} to{transform:scaleY(1)}
+}
+.sec-sub { font-size: 10px; color: var(--dim); letter-spacing: 3px; margin-bottom: 2rem; text-transform: uppercase; }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+
+/* Info card with left-border glow sweep on hover */
+.info-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-left: 2px solid var(--accent); padding: 1.4rem;
+  transition: all 0.2s; position: relative; overflow: hidden;
+}
+.info-card::after {
+  content: '';
+  position: absolute; left: 0; top: -100%; width: 2px; height: 100%;
+  background: linear-gradient(180deg, transparent, var(--accent2), transparent);
+  transition: top 0s;
+}
+.info-card:hover { border-left-color: var(--accent2); box-shadow: 0 0 16px rgba(200,169,110,0.08); }
+.info-card:hover::after {
+  top: 100%;
+  transition: top 0.5s ease;
+}
+.info-card h3 { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.7rem; }
+.info-card p { font-size: 12px; color: #888; line-height: 1.75; }
+.info-card .card-meta { font-size: 10px; color: var(--dim); letter-spacing: 2px; margin-top: 0.9rem; padding-top: 0.7rem; border-top: 1px solid var(--border); }
+.resource-section { margin-bottom: 2.5rem; }
+.resource-item { margin-bottom: 1.4rem; }
+.resource-header { display: flex; justify-content: space-between; font-size: 11px; color: var(--accent); letter-spacing: 2px; margin-bottom: 0.45rem; }
+.resource-bar { height: 5px; background: #0d0d0d; border: 1px solid var(--border); overflow: hidden; }
+
+/* Resource fill with staggered entrance */
+.resource-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3a2a10, var(--accent2));
+  box-shadow: 0 0 6px rgba(200,169,110,0.4);
+  position: relative;
+  transform: scaleX(0); transform-origin: left;
+  animation: resourceEntrance 0.8s ease forwards;
+}
+.resource-item:nth-child(1) .resource-fill { animation-delay: 0.1s; }
+.resource-item:nth-child(2) .resource-fill { animation-delay: 0.25s; }
+.resource-item:nth-child(3) .resource-fill { animation-delay: 0.4s; }
+.resource-item:nth-child(4) .resource-fill { animation-delay: 0.55s; }
+@keyframes resourceEntrance {
+  from{transform:scaleX(0)} to{transform:scaleX(1)}
+}
+.resource-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: shimmer 2.5s infinite;
+}
+@keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+.alert-box { background: rgba(139,26,26,0.1); border: 1px solid var(--red); border-left: 3px solid var(--red2); padding: 1rem 1.4rem; margin-bottom: 1.5rem; font-size: 12px; color: #997777; letter-spacing: 1px; line-height: 1.65; }
+.alert-box .alert-title { color: var(--red2); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.45rem; }
+
+/* Classified box with rotating diagonal gradient overlay */
+.classified-box {
+  background: rgba(20,15,10,0.8); border: 1px solid var(--border2);
+  border-top: 2px solid var(--accent); padding: 2rem; margin-bottom: 2rem;
+  position: relative; overflow: hidden;
+}
+.classified-box::before {
+  content: 'CLASSIFIED';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%) rotate(-28deg);
+  font-family: 'Rajdhani', sans-serif; font-size: 72px; font-weight: 700;
+  color: rgba(200,169,110,0.04); letter-spacing: 8px;
+  pointer-events: none; white-space: nowrap;
+}
+.classified-box::after {
+  content: '';
+  position: absolute; inset: -50%;
+  background: linear-gradient(135deg,
+    transparent 30%, rgba(200,169,110,0.025) 45%,
+    transparent 60%);
+  animation: classifiedRotate 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes classifiedRotate {
+  0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)}
+}
+.classified-box h3 { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 1rem; position: relative; z-index: 1; }
+.classified-box p { font-size: 12px; color: #888; line-height: 1.85; margin-bottom: 0.7rem; position: relative; z-index: 1; }
+.coord-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 11px; }
+.coord-table th { background: rgba(200,169,110,0.07); color: var(--accent); letter-spacing: 2px; text-transform: uppercase; padding: 0.7rem 1rem; border: 1px solid var(--border); text-align: left; }
+.coord-table td { padding: 0.7rem 1rem; border: 1px solid var(--border); color: #777; }
+.coord-table tr:hover td { background: rgba(200,169,110,0.04); color: #999; }
+
+/* Coord table rows slide-in on reveal */
+#coords-unlocked .coord-table tbody tr {
+  animation: rowSlideIn 0.4s ease forwards;
+  opacity: 0; transform: translateX(-12px);
+}
+#coords-unlocked .coord-table tbody tr:nth-child(1){animation-delay:0.05s}
+#coords-unlocked .coord-table tbody tr:nth-child(2){animation-delay:0.15s}
+#coords-unlocked .coord-table tbody tr:nth-child(3){animation-delay:0.25s}
+#coords-unlocked .coord-table tbody tr:nth-child(4){animation-delay:0.35s}
+@keyframes rowSlideIn {
+  from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)}
+}
+.coord-highlight { color: var(--accent2) !important; }
+
+/* Status cards with counter animation on load */
+.status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.status-card {
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 1rem; text-align: center;
+  animation: statusCardIn 0.5s ease forwards;
+  opacity: 0; transform: translateY(8px);
+}
+.status-card:nth-child(1){animation-delay:0.05s}
+.status-card:nth-child(2){animation-delay:0.15s}
+.status-card:nth-child(3){animation-delay:0.25s}
+.status-card:nth-child(4){animation-delay:0.35s}
+@keyframes statusCardIn {
+  from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)}
+}
+.status-val {
+  font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700;
+  color: var(--accent2); margin-bottom: 0.2rem;
+  animation: statusValCount 0.6s ease forwards;
+}
+@keyframes statusValCount {
+  0%{opacity:0;transform:scale(0.7)} 60%{transform:scale(1.08)} 100%{opacity:1;transform:scale(1)}
+}
+.status-lbl { font-size: 10px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+
+/* Taskbar with scanline animation */
+.taskbar {
+  background: var(--panel); border-top: 1px solid var(--border);
+  padding: 0.45rem 2rem;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; font-size: 10px; color: var(--dim); letter-spacing: 2px;
+  position: relative; overflow: hidden;
+}
+.taskbar::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg,
+    transparent 0px, transparent 3px,
+    rgba(200,169,110,0.015) 3px, rgba(200,169,110,0.015) 4px);
+  animation: taskbarScanlines 3s linear infinite;
+  pointer-events: none;
+}
+@keyframes taskbarScanlines {
+  0%{background-position:0 0} 100%{background-position:0 40px}
+}
+.taskbar-clock { color: var(--accent); }
+
+/* ===== BANNED SCREEN ===== */
+#banned-screen {
+  position: fixed; inset: 0; background: #000;
+  z-index: 5000; display: none;
+  flex-direction: column; justify-content: center; align-items: center; gap: 1.2rem;
+}
+#banned-screen.active { display: flex; }
+.banned-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(36px, 7vw, 72px); font-weight: 700; letter-spacing: 8px;
+  color: var(--red2); text-shadow: 0 0 30px rgba(192,57,43,0.8);
+  animation: errFlicker 0.15s infinite;
+}
+.banned-sub {
+  font-size: 11px; color: var(--accent); letter-spacing: 4px;
+  text-transform: uppercase; text-align: center; max-width: 500px; line-height: 2.2;
+}
+.banned-code { font-size: 10px; color: var(--dim); letter-spacing: 3px; text-align: center; }
+.banned-unlock-btn {
+  margin-top: 1.5rem;
+  background: transparent; border: 1px solid var(--accent); color: var(--accent);
+  font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 3px;
+  padding: 0.75rem 2rem; cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+  animation: pulse 2s infinite;
+}
+.banned-unlock-btn:hover { background: rgba(200,169,110,0.08); }
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<!-- PASSWORD SCREEN -->
+<div id="pass-screen">
+  <svg class="logo-svg" width="160" height="130" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="55" y="95" width="90" height="45" fill="var(--accent)" opacity="0.9"/>
+    <rect x="40" y="105" width="35" height="35" fill="var(--accent)" opacity="0.85"/>
+    <rect x="125" y="108" width="30" height="32" fill="var(--accent)" opacity="0.85"/>
+    <rect x="62" y="55" width="10" height="42" fill="var(--accent)"/>
+    <rect x="82" y="45" width="10" height="52" fill="var(--accent)"/>
+    <rect x="102" y="50" width="10" height="47" fill="var(--accent)"/>
+    <rect x="122" y="60" width="9" height="37" fill="var(--accent)" opacity="0.8"/>
+    <ellipse cx="67" cy="50" rx="7" ry="5" fill="var(--accent)" opacity="0.5"/>
+    <ellipse cx="74" cy="44" rx="5" ry="4" fill="var(--accent)" opacity="0.35"/>
+    <ellipse cx="87" cy="40" rx="8" ry="6" fill="var(--accent)" opacity="0.5"/>
+    <ellipse cx="96" cy="34" rx="6" ry="5" fill="var(--accent)" opacity="0.35"/>
+    <ellipse cx="107" cy="44" rx="7" ry="5" fill="var(--accent)" opacity="0.45"/>
+    <line x1="30" y1="140" x2="170" y2="140" stroke="var(--accent)" stroke-width="2" opacity="0.6"/>
+    <text x="100" y="158" text-anchor="middle" font-family="Rajdhani,sans-serif" font-weight="700" font-size="22" fill="var(--accent)" letter-spacing="6">REGIME</text>
+  </svg>
+  <div class="corp-sub">SECURE TERMINAL // AUTHORIZED ACCESS ONLY</div>
+  <div class="pass-label">WPROWADZ HASLO DOSTEPU</div>
+  <div class="pass-row">
+    <input type="text" id="pass-input" placeholder="OMEGA-1 // CLEARANCE REQUIRED" autocomplete="off" onkeydown="if(event.key==='Enter')tryPass()">
+    <button class="pass-btn" onclick="tryPass()">&#8594;</button>
+  </div>
+  <div class="pass-divider"></div>
+</div>
+
+<!-- ERROR OVERLAY -->
+<div id="error-overlay">
+  <div class="error-big">ERROR</div>
+  <div class="error-sub">NIEAUTORYZOWANY DOSTEP &mdash; AKTYWACJA PROTOKOLU BEZPIECZENSTWA</div>
+  <div class="error-bars">
+    <div class="error-bar"></div><div class="error-bar"></div><div class="error-bar"></div>
+    <div class="error-bar"></div><div class="error-bar"></div><div class="error-bar"></div>
+    <div class="error-bar"></div>
+  </div>
+  <div class="error-code" id="error-code-line">SECURITY_BREACH :: TRACE_INITIATED :: NODE_0x4F2A</div>
+  <div class="error-progress-wrap">
+    <div class="error-progress-label"><span>SLEDZENIE INTRUZA</span><span id="err-pct">0%</span></div>
+    <div class="error-progress-bar"><div class="error-progress-fill" id="err-fill"></div></div>
+  </div>
+</div>
+
+<!-- HACK SCREEN -->
+<div id="hack-screen" class="hack-screen-wrap">
+  <div class="hack-bar">
+    <span class="hack-bar-left">
+      <span class="hack-status-dot"></span>
+      THE REGIME // COUNTERMEASURE ACTIVE &mdash; WYLACZ ZABEZPIECZENIE
+    </span>
+    <span class="hack-bar-right">
+      <span class="hack-status-text" id="hack-status-label">HACK IN PROGRESS</span>
+      <button class="hack-btn-fail" id="hack-fail-btn" onclick="hackFailed()" style="display:none">PRZEGRANA &mdash; ZAMKNIJ</button>
+    </span>
+  </div>
+  <div id="hack-game-area" class="hack-game-area">
+    <div class="hack-container">
+      <div class="hackBox hack-game-box">
+        <div class="hackStart hack-game-start" id="buttonStart" onclick="gameStart()" style="display:none">ZACZNIJ HACKOWAC</div>
+        <div class="hackInfo hack-game-info" style="display:none"><h2 id="textInfo"></h2></div>
+        <div class="hackText hack-game-text" style="display:none"><h2>WYLACZ ZABEZPIECZENIE</h2></div>
+        <div class="hackFunction" style="display:none"></div>
+        <div class="hackFooter hack-game-footer">
+          <div id="progressBox" style="display:none">
+            <div class="progressBox"><div class="progressBar" id="progress-bar"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOCKOUT SCREEN -->
+<div id="lockout-screen">
+  <div class="lockout-static"></div>
+  <div class="glitch-line"></div>
+  <div class="lockout-title">LOCKOUT</div>
+  <div class="lockout-sub">
+    NIEAUTORYZOWANY DOSTEP WYKRYTY<br>
+    SESJA ZAKONCZONA &mdash; TOZSAMOSC ZAREJESTROWANA<br>
+    PROTOKOL BEZPIECZENSTWA OMEGA AKTYWNY
+  </div>
+  <div class="lockout-code" id="lockout-code">TRACE_ID: &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608; // AGENT_DISPATCH: AKTYWNY // ETA: 00:03:47</div>
+  <div class="lockout-shutdown">TERMINAL ZABLOKOWANY &mdash; SKONTAKTUJ SIE Z ADMINISTRATOREM SYSTEMU</div>
+</div>
+
+<!-- MAIN TABLET -->
+<div id="tablet">
+  <div class="topbar">
+    <div class="topbar-title">THE REGIMEIST</div>
+    <div class="topbar-right">
+      <span class="topbar-status"><span class="topbar-dot"></span>SYSTEM ONLINE</span>
+      <span class="topbar-status" id="clock-display">--:--:--</span>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('info',this)">INFORMACJE</button>
+    <button class="tab-btn" onclick="switchTab('equelist',this)">PROJEKT EQUELIST</button>
+  </div>
+  <div class="content">
+    <div class="tab-panel active" id="tab-info">
+      <div class="sec-title">WYDOBYCIE ZASOBOW</div>
+      <div class="sec-sub">STATUS OPERACYJNY &mdash; STREFA PRZEMYSLOWA ALPHA-7 &mdash; AKTUALIZACJA: CIAGLA</div>
+      <div class="alert-box">
+        <div class="alert-title">OSTRZEZENIE OPERACYJNE</div>
+        Poziom promieniowania w sektorze U-3 przekroczyl norme o 180%. Personel bez ochrony klasy HAZMAT-II ma zakaz wstepu. Reaktor pracuje ponizej nominalnej mocy &mdash; trwa faza rozruchu.
+      </div>
+      <div class="status-grid">
+        <div class="status-card"><div class="status-val">61%</div><div class="status-lbl">Moc Reaktora</div></div>
+        <div class="status-card"><div class="status-val">0.3T</div><div class="status-lbl">Uran / dobe</div></div>
+        <div class="status-card"><div class="status-val">74</div><div class="status-lbl">Personel aktywny</div></div>
+        <div class="status-card"><div class="status-val">180%</div><div class="status-lbl">Promieniowanie U-3</div></div>
+      </div>
+      <div class="resource-section">
+        <div class="sec-title" style="font-size:15px;margin-bottom:1.4rem;">POSTEP WYDOBYCIA</div>
+        <div class="resource-item">
+          <div class="resource-header"><span>URAN-235 &mdash; SEKTOR U-3</span><span>31% POJEMNOSCI</span></div>
+          <div class="resource-bar"><div class="resource-fill" style="width:31%"></div></div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-header"><span>PLUTON-239 &mdash; SEKTOR P-1</span><span>12% POJEMNOSCI</span></div>
+          <div class="resource-bar"><div class="resource-fill" style="width:12%"></div></div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-header"><span>TORYT &mdash; SEKTOR T-9</span><span>22% POJEMNOSCI</span></div>
+          <div class="resource-bar"><div class="resource-fill" style="width:22%"></div></div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-header"><span>DEUTERIUM &mdash; ZBIORNIK GLOWNY</span><span>8% POJEMNOSCI</span></div>
+          <div class="resource-bar"><div class="resource-fill" style="width:8%"></div></div>
+        </div>
+      </div>
+      <div class="info-grid">
+        <div class="info-card"><h3>REAKTOR NUKLEARNY &mdash; FAZA ROZRUCHU</h3><p>Reaktor typu SMR-160 (Small Modular Reactor) &mdash; jeden z nowszych modeli w eksploatacji The Regime. Uruchomiony 94 dni temu, wciaz w fazie rozruchu. Paliwo: nisko wzbogacony uran-235 (2.8%). Temperatura rdzenia: 187&deg;C. Moc docelowa planowana za 60 dni.</p><div class="card-meta">SEKTOR: ALPHA-CORE // STATUS: ROZRUCH</div></div>
+        <div class="info-card"><h3>WYDOBYCIE URANU &mdash; HARMONOGRAM</h3><p>Zmiana poranna (06:00&ndash;14:00): 0.12T<br>Zmiana popoludniowa (14:00&ndash;22:00): 0.10T<br>Zmiana nocna (22:00&ndash;06:00): 0.08T<br>Lacznie: ~0.3T/dobe. Cel miesieczny: 9T.</p><div class="card-meta">WYDAJNOSC: 71% PLANU // TREND: UP</div></div>
+        <div class="info-card"><h3>PERSONEL TECHNICZNY</h3><p>Lacznie 74 pracownikow aktywnych. 28 inzynierow jadrowych, 18 technikow wydobycia, 20 ochrony, 8 personelu pomocniczego. Rotacja co 6 miesiecy. Obiekt w fazie rozbudowy &mdash; docelowo 120 osob.</p><div class="card-meta">POZIOM BEZPIECZENSTWA: BETA // DOSTEP: OGRANICZONY</div></div>
+        <div class="info-card"><h3>INCYDENTY &mdash; OSTATNIE 30 DNI</h3><p>Wyciek chlodziwa w sektorze U-3 (dzien 12) &mdash; opanowany. Awaria systemu wentylacji w tunelu T-4 (dzien 19) &mdash; naprawiona. Nieautoryzowana proba dostepu do strefy P-1 (dzien 27) &mdash; neutralizowana.</p><div class="card-meta">INCYDENTY KRYTYCZNE: 0 // LACZNIE: 3</div></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-equelist">
+      <div class="sec-title">PROJEKT EQUELIST</div>
+      <div class="sec-sub">POZIOM DOSTEPU: OMEGA-1 &mdash; TYLKO DO WGLADU WEWNETRZNEGO &mdash; THE REGIME R&amp;D</div>
+      <div class="classified-box">
+        <h3>ODKRYCIE KLASY OMEGA</h3>
+        <p>Wyspa, na ktorej zlokalizowana jest Fabryka The Regime, nie jest martwa skala. Badania geobiologiczne prowadzone od 2021 roku jednoznacznie potwierdzaja: <strong style="color:var(--accent2)">wyspa jest zywym organizmem.</strong></p>
+        <p>Siec mycelium o zasiegu 47 km&sup2; przenika cala strukture geologiczna wyspy. Organizm wykazuje reakcje na bodzce zewnetrzne &mdash; wybuchy, wibracje sejsmiczne, zmiany temperatury. Zarejestrowano impulsy bioelektryczne o czestotliwosci 0.3&ndash;2.1 Hz, analogiczne do aktywnosci neuronalnej.</p>
+        <p>Wydobycie zasobow nuklearnych powoduje <strong style="color:var(--accent2)">bezposrednie uszkodzenia tkanki organicznej</strong> wyspy. Szacowany czas do krytycznej reakcji obronnej organizmu: <strong style="color:var(--red2)">nieznany.</strong></p>
+      </div>
+      <div class="info-grid">
+        <div class="info-card"><h3>STRUKTURA BIOLOGICZNA</h3><p>Wyspa sklada sie z 3 warstw: warstwa powierzchniowa (gleba + roslinnosc, 0&ndash;4m), warstwa mycelium (siec organiczna, 4&ndash;180m), warstwa rdzeniowa (nieznana struktura, 180m+). Rdzen emituje cieplo 340&deg;C &mdash; niezgodne z geologia wulkaniczna.</p><div class="card-meta">KLASYFIKACJA: ORGANIZM KLASY X // PRECEDENS: BRAK</div></div>
+        <div class="info-card"><h3>REAKCJE OBRONNE</h3><p>Zarejestrowano 14 incydentow, w ktorych wyspa wykazala aktywna odpowiedz na dzialalnosc czlowieka: lokalne trzesienia ziemi, nagle wzrosty temperatury gruntu, emisja toksycznych gazow z pekniec skalnych. Korelacja z harmonogramem wydobycia: 91%.</p><div class="card-meta">INCYDENTY OBRONNE: 14 // OFIARY: 23</div></div>
+        <div class="info-card"><h3>KOMUNIKACJA BIOELEKTRYCZNA</h3><p>Siec mycelium przesyla sygnaly z predkoscia ~12 m/s. Zidentyfikowano wzorce powtarzalne &mdash; mozliwa forma prymitywnej komunikacji lub pamieci. Projekt EQUELIST bada mozliwosc dekodowania tych sygnalow.</p><div class="card-meta">POSTEP DEKODOWANIA: 7% // PRIORYTET: OMEGA</div></div>
+        <div class="info-card"><h3>IMPLIKACJE ETYCZNE</h3><p>Zarzad The Regime podjal decyzje o kontynuacji wydobycia pomimo odkrycia. Raport etyczny dr Kovacs (2022) zostal utajniony. Trzech naukowcow, ktorzy sprzeciwili sie decyzji, zostalo "przeniesionych". Ich obecna lokalizacja: nieznana.</p><div class="card-meta">STATUS RAPORTU: UTAJNIONY // DOSTEP: OMEGA-1</div></div>
+      </div>
+      <div class="classified-box" style="margin-top:2rem;">
+        <h3>UNDERGROUND FACILITY &mdash; KOORDYNATY DOSTEPU</h3>
+        <p>Wejscie do podziemnego kompleksu badawczego zlokalizowane jest w strefie dostepnej wylacznie przez siec tuneli wydobywczych. Dostep do koordynatow wymaga weryfikacji biometrycznej.</p>
+        <div id="coords-locked" style="margin-top:1.5rem;">
+          <div class="alert-box" style="margin-bottom:1rem;">
+            <div class="alert-title">DOSTEP ZABLOKOWANY</div>
+            Plik koordynatow jest zaszyfrowany. Wymagana weryfikacja biometryczna &mdash; przelam zabezpieczenie systemu aby uzyskac dostep.
+          </div>
+          <button onclick="launchHack2()" style="background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;padding:0.75rem 2rem;cursor:pointer;text-transform:uppercase;transition:all 0.2s;display:block;width:100%;" onmouseover="this.style.background='rgba(200,169,110,0.08)'" onmouseout="this.style.background='transparent'">
+            PRZELAM ZABEZPIECZENIE &mdash; UZYSKAJ DOSTEP
+          </button>
+        </div>
+        <div id="coords-unlocked" style="display:none;">
+          <table class="coord-table">
+            <thead><tr><th>PUNKT WEJSCIA</th><th>KOORDYNATY</th><th>GLEBOKOSC</th><th>STATUS</th></tr></thead>
+            <tbody>
+              <tr><td>WEJSCIE GLOWNE &mdash; TUNEL ALPHA</td><td class="coord-highlight">X: -847.3 / Y: 204.1 / Z: -1203.7</td><td>-180m</td><td style="color:#b8860b">AKTYWNY</td></tr>
+              <tr><td>WEJSCIE AWARYJNE &mdash; TUNEL BETA</td><td class="coord-highlight">X: -912.0 / Y: 198.5 / Z: -1189.2</td><td>-165m</td><td style="color:#b8860b">AKTYWNY</td></tr>
+              <tr><td>WEJSCIE TECHNICZNE &mdash; SZYB T-4</td><td class="coord-highlight">X: -803.6 / Y: 211.8 / Z: -1247.4</td><td>-210m</td><td style="color:var(--red2)">USZKODZONY</td></tr>
+              <tr><td>WEJSCIE BADAWCZE &mdash; SEKCJA OMEGA</td><td class="coord-highlight">X: -871.1 / Y: 200.0 / Z: -1220.9</td><td>-195m</td><td style="color:var(--red2)">ZABLOKOWANY</td></tr>
+            </tbody>
+          </table>
+          <div class="alert-box" style="margin-top:1rem;margin-bottom:0;">
+            <div class="alert-title">PROTOKOL DOSTEPU</div>
+            Wejscie do Underground Facility wymaga: (1) Przepustki klasy OMEGA-1, (2) Kodu biometrycznego zarejestrowanego w systemie The Regime, (3) Eskorty minimum 2 agentow ochrony. Strefa rdzeniowa (poziom -180m i nizej) wymaga skafandra izolacyjnego klasy BIO-IV.
+          </div>
+        </div>
+      </div>
+      <div class="info-grid" style="margin-top:2rem;">
+        <div class="info-card"><h3>POZIOM -180M: STREFA KONTAKTU</h3><p>Pierwsza warstwa bezposredniego kontaktu z organizmem wyspy. Sciany tuneli pokryte bioluminescencyjna tkanka mycelium. Temperatura: 47&deg;C. Wilgotnosc: 98%. Zarejestrowano infradwwieki 18&ndash;22 Hz.</p><div class="card-meta">DOSTEP: OMEGA-1 // SKAFANDER: WYMAGANY</div></div>
+        <div class="info-card"><h3>POZIOM -210M: RDZEN NEURONALNY</h3><p>Hipotetyczna lokalizacja "centrum" organizmu. Zaden z wyslanych zespolow nie dotarl dalej niz -195m. Ostatni zespol (6 osob, 2023-11-14) nie powrocil. Sygnaly bioelektryczne osiagaja tu szczyt intensywnosci.</p><div class="card-meta">STATUS: NIEZBADANY // OSTATNI KONTAKT: 2023-11-14</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="taskbar">
+    <span>THE REGIME // REGIMEIST TERMINAL v2.4.1</span>
+    <span class="taskbar-clock" id="taskbar-clock">--:--:--</span>
+    <span>POZIOM DOSTEPU: OMEGA-1</span>
+  </div>
+</div>
+
+<!-- HACK2 SCREEN -->
+<div id="hack2-screen" style="display:none; position:fixed; inset:0; z-index:4000; background:#080806; flex-direction:column;">
+  <div class="hack-bar">
+    <span class="hack-bar-left">
+      <span class="hack-status-dot"></span>
+      THE REGIME // ZABEZPIECZENIE BIOMETRYCZNE &mdash; UNDERGROUND FACILITY
+    </span>
+    <span class="hack-bar-right">
+      <span class="hack-status-text" id="hack2-status-label">LAMANIE SZYFRU</span>
+      <button class="hack-btn-fail" id="hack2-fail-btn" onclick="hack2Failed()" style="display:none">PRZEGRANA &mdash; ZAMKNIJ</button>
+    </span>
+  </div>
+  <div id="hack2-game-area" class="hack-game-area">
+    <div class="hack-container">
+      <div class="hackBox hack-game-box" id="h2-hackBox">
+        <div class="hackStart hack-game-start" id="h2-buttonStart" onclick="h2_gameStart()" style="display:none">ZACZNIJ HACKOWAC</div>
+        <div class="hackOptions" id="h2-hackOptions" style="display:none"></div>
+        <div class="hackInfo hack-game-info" id="h2-hackInfo" style="display:none"><h2 id="h2-textInfo"></h2></div>
+        <div class="hackText hack-game-text" id="h2-hackText" style="display:none"><h2>ZLAM ZAMEK</h2></div>
+        <div id="h2-hackFunction" class="hackFunction" style="display:none">
+          <div id="h2-a"></div><div id="h2-b"></div><div id="h2-c"></div>
+        </div>
+        <div id="h2-hackFunction2" class="hackFunction2" style="display:none">
+          <div id="h2-a1"></div><div id="h2-a2"></div><div id="h2-a3"></div>
+        </div>
+        <div class="hackFooter hack-game-footer">
+          <div id="h2-progressBox" style="display:none">
+            <div class="progressBox"><div class="progressBar" id="h2-progress-bar"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BANNED SCREEN -->
+<div id="banned-screen">
+  <div class="lockout-static"></div>
+  <div class="glitch-line"></div>
+  <div class="banned-title">ACCESS DENIED</div>
+  <div class="banned-sub">
+    TOZSAMOSC ZAREJESTROWANA W SYSTEMIE THE REGIME<br>
+    DOSTEP DO TERMINALA ZABLOKOWANY<br>
+    WYMAGANA PONOWNA WERYFIKACJA BIOMETRYCZNA
+  </div>
+  <div class="banned-code" id="banned-code">SESSION_ID: &#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608;&#9608; // BLACKLIST: AKTYWNY // THREAT_LEVEL: OMEGA</div>
+  <button class="banned-unlock-btn" onclick="launchHack3()">ZWERYFIKUJ TOZSAMOSC &mdash; ODBLOKUJ DOSTEP</button>
+</div>
+
+<!-- HACK3 SCREEN -->
+<div id="hack3-screen" class="hack-screen-wrap">
+  <div class="hack-bar">
+    <span class="hack-bar-left">
+      <span class="hack-status-dot"></span>
+      THE REGIME // WERYFIKACJA BIOMETRYCZNA &mdash; UZYJ STRZALEK
+    </span>
+    <span class="hack-bar-right">
+      <span class="hack-status-text" id="hack3-status-label">WERYFIKACJA W TOKU</span>
+      <button class="hack-btn-fail" id="hack3-fail-btn" onclick="hack3Failed()" style="display:none">PRZEGRANA</button>
+    </span>
+  </div>
+  <div id="hack3-game-area" class="hack-game-area">
+    <div class="hack-container">
+      <div class="hackBox hack-game-box">
+        <div class="hackStart hack-game-start" id="h3-buttonStart" onclick="h3_gameStart()" style="display:none">START</div>
+        <div class="hackInfo hack-game-info" id="h3-hackInfo" style="display:none"><h2 id="h3-textInfo"></h2></div>
+        <div class="hackText hack-game-text" id="h3-hackText" style="display:none"><h2>PRZEJDZ NA DRUGA STRONE</h2></div>
+        <div class="hackFunction" id="h3-hackFunction" style="display:none">
+          <div id="h3-circle" class="circle" style="top:270px;left:10px"></div>
+          <div id="line1" class="allLine"><div style="--color:rgba(200,169,110,0.8)" class="line up" id="h3-0"></div><div style="--color:rgba(200,169,110,0.8)" class="line down" id="h3-1"></div></div>
+          <div id="line2" class="allLine"><div style="--color:rgba(192,57,43,0.8)" class="line up" id="h3-2"></div><div style="--color:rgba(192,57,43,0.8)" class="line down" id="h3-3"></div></div>
+          <div id="line3" class="allLine"><div style="--color:rgba(200,169,110,0.8)" class="line up" id="h3-4"></div><div style="--color:rgba(200,169,110,0.8)" class="line down" id="h3-5"></div></div>
+          <div id="line4" class="allLine"><div style="--color:rgba(192,57,43,0.8)" class="line up" id="h3-6"></div><div style="--color:rgba(192,57,43,0.8)" class="line down" id="h3-7"></div></div>
+          <div id="line5" class="allLine"><div style="--color:rgba(200,169,110,0.6)" class="line up" id="h3-8"></div><div style="--color:rgba(200,169,110,0.6)" class="line down" id="h3-9"></div></div>
+          <div id="line6" class="allLine"><div style="--color:rgba(192,57,43,0.8)" class="line up" id="h3-10"></div><div style="--color:rgba(192,57,43,0.8)" class="line down" id="h3-11"></div></div>
+          <div id="line7" class="allLine"><div style="--color:rgba(200,169,110,0.8)" class="line up" id="h3-12"></div><div style="--color:rgba(200,169,110,0.8)" class="line down" id="h3-13"></div></div>
+          <div id="line8" class="allLine"><div style="--color:rgba(192,57,43,0.6)" class="line up" id="h3-14"></div><div style="--color:rgba(192,57,43,0.6)" class="line down" id="h3-15"></div></div>
+          <div id="line9" class="allLine"><div style="--color:rgba(200,169,110,0.8)" class="line up" id="h3-16"></div><div style="--color:rgba(200,169,110,0.8)" class="line down" id="h3-17"></div></div>
+          <div id="line10" class="allLine"><div style="--color:rgba(192,57,43,0.8)" class="line up" id="h3-18"></div><div style="--color:rgba(192,57,43,0.8)" class="line down" id="h3-19"></div></div>
+          <div id="line11" class="allLine"><div style="--color:rgba(200,169,110,0.6)" class="line up" id="h3-20"></div><div style="--color:rgba(200,169,110,0.6)" class="line down" id="h3-21"></div></div>
+          <div id="line12" class="allLine"><div style="--color:rgba(192,57,43,0.8)" class="line up" id="h3-22"></div><div style="--color:rgba(192,57,43,0.8)" class="line down" id="h3-23"></div></div>
+          <div id="line13" class="allLine"><div style="--color:rgba(200,169,110,0.8)" class="line up" id="h3-24"></div><div style="--color:rgba(200,169,110,0.8)" class="line down" id="h3-25"></div></div>
+          <div id="line14" class="allLine"><div style="--color:rgba(192,57,43,0.8)" class="line up" id="h3-26"></div><div style="--color:rgba(192,57,43,0.8)" class="line down" id="h3-27"></div></div>
+          <div id="line15" class="allLine"><div style="--color:rgba(200,169,110,0.8)" class="line up" id="h3-28"></div><div style="--color:rgba(192,57,43,0.8)" class="line down" id="h3-29"></div></div>
+        </div>
+        <div class="hackFooter hack-game-footer">
+          <div id="h3-progressBox" style="display:none">
+            <div class="progressBox"><div class="progressBar" id="h3-progress-bar"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CLOCK =====
+function updateClock() {
+  const t = new Date().toLocaleTimeString('pl-PL');
+  ['clock-display','taskbar-clock'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = t; });
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ===== ERROR CODES =====
+const errorCodes = [
+  'SECURITY_BREACH :: TRACE_INITIATED :: NODE_0x4F2A',
+  'UNAUTHORIZED_ACCESS :: FIREWALL_BYPASS :: PORT_443',
+  'INTRUSION_ALERT :: IP_TRACE_ACTIVE :: SECTOR_7G',
+  'LOCKDOWN_PROTOCOL :: COUNTERMEASURES_LEVEL_3',
+  'THE_REGIME_SECURITY :: AGENT_DISPATCH :: ETA_00:02:14',
+  'DATA_EXFILTRATION_ATTEMPT :: BLOCKING :: ENCRYPTION_ACTIVE',
+  'BIOMETRIC_MISMATCH :: IDENTITY_UNKNOWN :: FLAGGED',
+  'NEURAL_SCAN_INITIATED :: SUBJECT_IDENTIFIED :: THREAT_LEVEL_HIGH',
+];
+let errIdx = 0;
+
+// ===== PASSWORD =====
+function tryPass() {
+  const val = document.getElementById('pass-input').value;
+  if (!val || val.length === 0) return;
+  triggerError();
+}
+
+// ===== ERROR -> HACK =====
+function triggerError() {
+  document.getElementById('pass-screen').style.display = 'none';
+  const overlay = document.getElementById('error-overlay');
+  overlay.classList.add('active');
+  const codeEl = document.getElementById('error-code-line');
+  const codeInt = setInterval(() => { errIdx = (errIdx+1) % errorCodes.length; codeEl.textContent = errorCodes[errIdx]; }, 160);
+  const fill = document.getElementById('err-fill');
+  const pct  = document.getElementById('err-pct');
+  let progress = 0;
+  const progInt = setInterval(() => {
+    progress += Math.random() * 4.5 + 0.8;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(progInt); clearInterval(codeInt);
+      setTimeout(() => { overlay.classList.remove('active'); launchHack(); }, 350);
+    }
+    fill.style.width = progress + '%';
+    pct.textContent = Math.floor(progress) + '%';
+  }, 75);
+}
+
+// ===== LAUNCH =====
+function launchHack() {
+  gameInit();
+  document.getElementById('hack-screen').classList.add('active');
+  setTimeout(() => { gameStart(); }, 50);
+  setTimeout(() => {
+    if (!gameEnded) document.getElementById('hack-fail-btn').style.display = 'inline-block';
+  }, 5000);
+}
+
+// ===== WIN =====
+function hackComplete() {
+  document.getElementById('hack-screen').classList.remove('active');
+  document.getElementById('hack-screen').style.display = 'none';
+  const tablet = document.getElementById('tablet');
+  tablet.style.display = 'flex';
+  tablet.classList.add('active');
+}
+
+// ===== FAIL =====
+function hackFailed() {
+  setBanned();
+  document.getElementById('hack-screen').classList.remove('active');
+  document.getElementById('hack-screen').style.display = 'none';
+  const ls = document.getElementById('lockout-screen');
+  ls.classList.add('active');
+  const codes = [
+    'TRACE_ID: \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588 // AGENT_DISPATCH: AKTYWNY // ETA: 00:03:47',
+    'IDENTITY_LOGGED :: BIOMETRIC_HASH: 0xF4A2C1 :: FLAGGED',
+    'NEURAL_PATTERN_STORED :: THREAT_LEVEL: OMEGA :: RESPONSE: LETHAL',
+    'LOCATION_TRIANGULATED :: SECTOR_7G :: UNIT_DISPATCHED',
+    'SESSION_TERMINATED :: DATA_WIPED :: EVIDENCE_DESTROYED',
+  ];
+  let ci = 0;
+  const codeEl = document.getElementById('lockout-code');
+  setInterval(() => { ci = (ci+1) % codes.length; codeEl.textContent = codes[ci]; }, 1200);
+  setTimeout(() => {
+    ls.innerHTML = '<div class="lockout-static"></div>';
+    setTimeout(() => { document.body.style.background = '#000'; ls.style.background = '#000'; }, 1500);
+  }, 6000);
+}
+
+// ===== TAB SWITCH =====
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+document.getElementById('pass-input').focus();
+
+// ===== BANNED SYSTEM =====
+const BANNED_KEY = 'regime_banned';
+function setBanned()  { localStorage.setItem(BANNED_KEY, '1'); }
+function clearBanned(){ localStorage.removeItem(BANNED_KEY); }
+function isBanned()   { return localStorage.getItem(BANNED_KEY) === '1'; }
+
+if (isBanned()) {
+  document.getElementById('pass-screen').style.display = 'none';
+  document.getElementById('banned-screen').classList.add('active');
+  const bannedCodes = [
+    'SESSION_ID: \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588 // BLACKLIST: AKTYWNY // THREAT_LEVEL: OMEGA',
+    'IDENTITY_HASH: 0xF4A2C1 // FLAGGED :: PERMANENT_BAN',
+    'BIOMETRIC_MISMATCH :: PREVIOUS_INTRUSION_LOGGED',
+    'REGIME_SECURITY :: TERMINAL_LOCKED :: CONTACT_ADMIN',
+  ];
+  let bi = 0;
+  const bEl = document.getElementById('banned-code');
+  setInterval(() => { bi = (bi+1) % bannedCodes.length; bEl.textContent = bannedCodes[bi]; }, 1500);
+}
+
+let _kb = '';
+document.addEventListener('keydown', (e) => {
+  _kb += e.key.toLowerCase();
+  if (_kb.length > 8) _kb = _kb.slice(-8);
+  if (_kb === atob('YW5kZXJzb24=')) {
+    _kb = '';
+    if (document.getElementById('hack-screen').classList.contains('active') && !gameEnded) {
+      gameEnded = true;
+      clearInterval(progressBarInterval);
+      hackComplete();
+    }
+  }
+});
+
+// ===== HACK GAME =====
+const hackFunction = document.querySelector('.hackFunction');
+const hackText     = document.querySelector('.hackText');
+const progressBar  = document.getElementById('progressBox');
+const buttonStart  = document.getElementById('buttonStart');
+const hackInfo     = document.querySelector('.hackInfo');
+const textInfo     = document.getElementById('textInfo');
+const progressBarId = document.getElementById('progress-bar');
+
+var __timePlay = 15;
+var progressBarInterval;
+var gameEnded = false;
+var symbols  = ['\u{1F86A}','\u{1F868}','\u{1F869}','\u{1F86B}'];
+var symbols1 = [
+  ['\u{1F869}','\u{1F868}','\u{1F86A}','\u{1F86B}'],
+  ['\u{1F86B}','\u{1F868}','\u{1F869}','\u{1F86A}'],
+  ['\u{1F86A}','\u{1F868}','\u{1F869}','\u{1F86B}'],
+  ['\u{1F86A}','\u{1F869}','\u{1F868}','\u{1F86B}'],
+];
+var path;
+var R = 6, C = 6;
+var arrayDefault;
+
+function resetArrayDefault() {
+  arrayDefault = [
+    [0,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1],
+  ];
+}
+resetArrayDefault();
+
+const gameInit = () => {
+  gameEnded = false;
+  hackFunction.style.display = 'none';
+  hackText.style.display = 'none';
+  progressBar.style.display = 'none';
+  hackInfo.style.display = 'none';
+  buttonStart.style.display = '';
+  document.addEventListener('contextmenu', e => e.preventDefault());
+};
+
+const gameStart = () => {
+  if (gameEnded) return;
+  resetArrayDefault();
+  path = randomPath(R, C);
+  buttonStart.style.display = 'none';
+  progressBar.style.display = 'block';
+  hackInfo.style.display = 'block';
+  textInfo.innerHTML = 'Przygotuj sie...';
+  progressBarStart('start', 2);
+};
+
+const gameOver = () => {
+  gameEnded = true;
+  clearInterval(progressBarInterval);
+  hackInfo.style.display = 'block';
+  textInfo.innerHTML = 'Hack nieudany!';
+  hackFunction.style.display = 'none';
+  hackText.style.display = 'none';
+  progressBar.style.display = 'none';
+  buttonStart.style.display = 'none';
+  const lbl = document.getElementById('hack-status-label');
+  if (lbl) { lbl.textContent = 'HACK NIEUDANY'; lbl.style.color = 'var(--red2)'; }
+  setTimeout(() => { hackFailed(); }, 2000);
+};
+
+const gameWin = () => {
+  hackInfo.style.display = 'block';
+  textInfo.innerHTML = 'Hack udany!';
+  hackFunction.style.display = 'none';
+  hackText.style.display = 'none';
+  const lbl = document.getElementById('hack-status-label');
+  if (lbl) { lbl.textContent = 'DOSTEP UZYSKANY'; lbl.style.color = 'var(--accent2)'; }
+  progressBarStart('end', 2);
+  setTimeout(() => { hackComplete(); }, 2500);
+};
+
+function progressBarStart(type, time) {
+  var maxwidth = 1000, width = maxwidth;
+  const process = () => {
+    if (width > 0) {
+      if (type === 'start' || type === 'end') width -= 3; else width--;
+      progressBarId.style.width = (width * 100.0 / maxwidth) + '%';
+    } else {
+      clearInterval(progressBarInterval);
+      if (type === 'start') {
+        hackFunction.style.display = '';
+        hackText.style.display = '';
+        hackInfo.style.display = 'none';
+        progressBarStart('game', __timePlay);
+        createNumbers();
+        return;
+      }
+      if (type === 'game') {
+        hackFunction.style.display = 'none';
+        hackInfo.style.display = 'block';
+        textInfo.innerHTML = 'Czas minal!';
+        hackText.style.display = 'none';
+        gameOver();
+        return;
+      }
+      if (type === 'end') {
+        hackFunction.style.display = 'none';
+        hackText.style.display = 'none';
+        progressBar.style.display = 'none';
+        hackInfo.style.display = 'none';
+        if (!gameEnded) { buttonStart.style.display = ''; }
+      }
+    }
+  };
+  clearInterval(progressBarInterval);
+  progressBarInterval = setInterval(process, time);
+}
+
+function createNumbers() {
+  hackFunction.innerHTML = '';
+  var random = 0;
+  for (let i = 0; i < R * C; i++) {
+    const el = document.createElement('div');
+    el.classList.add('el');
+    if (i !== 0) el.classList.add('block');
+    var yCoord = Math.floor(i / R) + 1;
+    var xCoord = (i % R) + 1;
+    el.dataset.x = xCoord; el.dataset.y = yCoord;
+    el.setAttribute('id', xCoord + ',' + yCoord);
+    for (let j = 0; j < 4; j++) {
+      const square = document.createElement('div');
+      square.classList.add('smallel');
+      if (i < 1 || i > 34) square.textContent = symbols[j];
+      else {
+        random = Math.floor(Math.random() * 100);
+        if (random < 30) {
+          if (random < 10) square.textContent = symbols[3];
+          else if (random < 30) square.textContent = symbols[0];
+          else if (random < 50) square.textContent = symbols[1];
+          else square.textContent = symbols[2];
+        } else if (random < 50) square.textContent = symbols[2];
+        else square.textContent = symbols[1];
+      }
+      square.setAttribute('id', 's' + xCoord + ',' + yCoord);
+      square.onclick = function() {
+        if (el.classList.contains('aha')) return;
+        if (!el.classList.contains('block')) {
+          square.classList.add('checked');
+          el.classList.add('block'); el.classList.add('aha');
+          let clickElement = square.textContent;
+          if (clickElement === symbols[0]) {
+            const nx = Number(el.dataset.x) + 1, ny = Number(el.dataset.y);
+            const ne = document.getElementById(nx + ',' + ny);
+            if (ne) ne.classList.remove('block');
+          }
+          if (clickElement === symbols[1]) {
+            const nx = Number(el.dataset.x) - 1, ny = Number(el.dataset.y);
+            const ne = document.getElementById(nx + ',' + ny);
+            if (ne) ne.classList.remove('block');
+          }
+          if (clickElement === symbols[2]) {
+            const nx = Number(el.dataset.x), ny = Number(el.dataset.y) - 1;
+            const ne = document.getElementById(nx + ',' + ny);
+            if (ne) ne.classList.remove('block');
+          }
+          if (clickElement === symbols[3]) {
+            const nx = Number(el.dataset.x), ny = Number(el.dataset.y) + 1;
+            const ne = document.getElementById(nx + ',' + ny);
+            if (ne) ne.classList.remove('block');
+          }
+          arrayDefault[Number(el.dataset.y)-1][Number(el.dataset.x)-1] = 0;
+          if (document.getElementById('6,6') === el && square.textContent === symbols[3]) {
+            arrayDefault[0][0] = 0;
+            if (countPaths(arrayDefault) > 0) gameWin();
+          }
+          if (!gameEnded) {
+            const allCells = hackFunction.querySelectorAll('.el');
+            const hasAvailable = Array.from(allCells).some(
+              cell => !cell.classList.contains('block') && !cell.classList.contains('aha')
+            );
+            if (!hasAvailable) { setTimeout(() => gameOver(), 400); }
+          }
+        }
+      };
+      el.appendChild(square);
+    }
+    hackFunction.appendChild(el);
+  }
+  generateArrows();
+  displayPath(R, C, path);
+}
+
+function generateArrows() {
+  for (let i = 0; i < path.length; i++) {
+    let x = Number(path[i][0]) + 1, y = Number(path[i][1]) + 1;
+    let squareElement = document.getElementById(x + ',' + y);
+    var random = Math.floor(Math.random() * symbols.length);
+    for (let j = 0; j < 4; j++) {
+      const square = document.getElementById('s' + x + ',' + y);
+      square.classList.add('smallel');
+      square.textContent = symbols1[random][j];
+      squareElement.appendChild(square);
+    }
+  }
+}
+
+function countPaths(maze) {
+  if (maze[0][0] === -1) return 0;
+  for (let i = 0; i < R; i++) { if (maze[i][0] === 0) maze[i][0] = 1; else break; }
+  for (let i = 1; i < C; i++) { if (maze[0][i] === 0) maze[0][i] = 1; else break; }
+  for (let i = 1; i < R; i++) {
+    for (let j = 1; j < C; j++) {
+      if (maze[i][j] === -1) continue;
+      if (maze[i-1][j] > 0) maze[i][j] += maze[i-1][j];
+      if (maze[i][j-1] > 0) maze[i][j] += maze[i][j-1];
+    }
+  }
+  return maze[R-1][C-1] > 0 ? maze[R-1][C-1] : 0;
+}
+
+function randomPath(sizeX, sizeY) {
+  let x = R - 1, path = [];
+  for (let y = sizeY - 1; y >= 0; y--) {
+    let upX = y ? Math.floor(Math.random() * sizeX) : 0;
+    while (x !== upX) { path.push([x, y]); if (x < upX) x++; else x--; }
+    path.push([x, y]);
+  }
+  for (let i = path.length - 4; i >= 0; i--) {
+    if (i+3 < path.length && path[i][1] === path[i+3][1]+1 && path[i][0] === path[i+3][0]) path.splice(i+1, 2);
+  }
+  return path;
+}
+
+function displayPath(sizeX, sizeY, path) {
+  let grid = Array.from({length: sizeY}, () => Array(sizeX).fill('.'));
+  for (let [x, y] of path) grid[y][x] = 'X';
+  console.log(grid.map(r => r.join(' ')).join('\n'));
+}
+</script>
+
+<script>
+// ===== HACK2 =====
+var h2_progressBarInterval;
+var h2_gameEnded = false;
+var h2_allBoxes = 6;
+var h2_allTime  = 5 * 60;
+
+const h2_tower1 = () => document.getElementById('h2-a');
+const h2_tower2 = () => document.getElementById('h2-b');
+const h2_tower3 = () => document.getElementById('h2-c');
+const h2_hackFunction  = () => document.getElementById('h2-hackFunction');
+const h2_hackFunction2 = () => document.getElementById('h2-hackFunction2');
+const h2_hackText      = () => document.getElementById('h2-hackText');
+const h2_hackInfo      = () => document.getElementById('h2-hackInfo');
+const h2_textInfo      = () => document.getElementById('h2-textInfo');
+const h2_progressBar   = () => document.getElementById('h2-progressBox');
+const h2_progressBarId = () => document.getElementById('h2-progress-bar');
+const h2_buttonStart   = () => document.getElementById('h2-buttonStart');
+
+function h2_gameReset() {
+  h2_tower1().innerHTML = '';
+  h2_tower2().innerHTML = '';
+  h2_tower3().innerHTML = '';
+  for (var i = 1; i <= h2_allBoxes; i++) {
+    h2_tower1().innerHTML += '<div class="cube" id="tower_' + i + '" draggable="true"></div>';
+  }
+  h2_draged_drop();
+}
+
+function h2_gameInit() {
+  h2_gameEnded = false;
+  h2_gameReset();
+  h2_hackFunction().style.display  = 'none';
+  h2_hackFunction2().style.display = 'none';
+  h2_hackText().style.display      = 'none';
+  h2_progressBar().style.display   = 'none';
+  h2_hackInfo().style.display      = 'none';
+  h2_buttonStart().style.display   = 'none';
+  document.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+function h2_gameStart() {
+  if (h2_gameEnded) return;
+  h2_gameReset();
+  h2_buttonStart().style.display  = 'none';
+  h2_progressBar().style.display  = 'block';
+  h2_hackInfo().style.display     = 'block';
+  h2_textInfo().innerHTML         = 'Przygotuj sie...';
+  h2_progressBarStart('start', 2);
+}
+
+function h2_gameOver() {
+  h2_gameEnded = true;
+  clearInterval(h2_progressBarInterval);
+  h2_hackFunction().style.display  = 'none';
+  h2_hackFunction2().style.display = 'none';
+  h2_hackText().style.display      = 'none';
+  h2_progressBar().style.display   = 'none';
+  h2_hackInfo().style.display      = 'block';
+  h2_textInfo().innerHTML          = 'Hack nieudany!';
+  const lbl = document.getElementById('hack2-status-label');
+  if (lbl) { lbl.textContent = 'HACK NIEUDANY'; lbl.style.color = 'var(--red2)'; }
+  setTimeout(() => hack2Failed(), 2000);
+}
+
+function h2_gameWin() {
+  h2_gameEnded = true;
+  clearInterval(h2_progressBarInterval);
+  h2_hackFunction().style.display  = 'none';
+  h2_hackFunction2().style.display = 'none';
+  h2_hackText().style.display      = 'none';
+  h2_progressBar().style.display   = 'none';
+  h2_hackInfo().style.display      = 'block';
+  h2_textInfo().innerHTML          = 'Hack udany!';
+  const lbl = document.getElementById('hack2-status-label');
+  if (lbl) { lbl.textContent = 'DOSTEP UZYSKANY'; lbl.style.color = 'var(--accent2)'; }
+  setTimeout(() => hack2Complete(), 2000);
+}
+
+function h2_progressBarStart(type, time) {
+  var maxwidth = 1000, width = maxwidth;
+  const process = () => {
+    if (width > 0) {
+      if (type === 'start' || type === 'end') width -= 3; else width--;
+      h2_progressBarId().style.width = (width * 100.0 / maxwidth) + '%';
+    } else {
+      clearInterval(h2_progressBarInterval);
+      if (type === 'start') {
+        h2_hackFunction().style.display  = '';
+        h2_hackFunction2().style.display = '';
+        h2_hackText().style.display      = '';
+        h2_hackInfo().style.display      = 'none';
+        h2_progressBarStart('game', h2_allTime);
+        return;
+      }
+      if (type === 'game') { h2_gameOver(); return; }
+    }
+  };
+  clearInterval(h2_progressBarInterval);
+  h2_progressBarInterval = setInterval(process, time);
+}
+
+function h2_draged_drop() {
+  var tower = document.querySelectorAll('div#h2-hackFunction > div > div');
+  var boxes = document.querySelectorAll('div#h2-hackFunction > div');
+  tower.forEach(t => {
+    t.addEventListener('dragstart', h2_dragStart, false);
+    t.addEventListener('dragend',   h2_stopDrag,  false);
+  });
+  boxes.forEach(b => {
+    b.addEventListener('dragenter', e => e.preventDefault(), false);
+    b.addEventListener('dragover',  e => e.preventDefault(), false);
+    b.addEventListener('drop', h2_dropFinal, false);
+  });
+}
+
+function h2_dragStart(e) {
+  var body = e.target.parentNode;
+  if (body.childNodes[0] && body.childNodes[0].id === e.target.id) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('Text', e.target.id);
+  }
+}
+
+function h2_stopDrag(e) {
+  e.preventDefault();
+  var final = document.getElementById('h2-c');
+  if (final && final.childNodes.length == h2_allBoxes) h2_gameWin();
+}
+
+function h2_dropFinal(e) {
+  e.preventDefault();
+  var boxes = e.target;
+  var body  = document.getElementById(boxes.id) ? document.getElementById(boxes.id).childNodes : [];
+  var item  = e.dataTransfer.getData('Text');
+  var invalidIds = ['tower_1','tower_2','tower_3','tower_4','tower_5','tower_6','tower_7','tower_8','tower_9','tower_10'];
+  if (h2_compareArray(body, item) && !invalidIds.includes(boxes.id) && item !== '') {
+    var rem = document.getElementById(item);
+    if (rem) rem.parentNode.removeChild(rem);
+    boxes.innerHTML = '<div class="cube" id="' + item + '" draggable="true"></div>' + boxes.innerHTML;
+  }
+  h2_draged_drop();
+}
+
+function h2_compareArray(array, string) {
+  if (!array[0]) return true;
+  return string.split('_')[1] < array[0].id.split('_')[1];
+}
+
+function launchHack2() {
+  const hs = document.getElementById('hack2-screen');
+  hs.style.display = 'flex';
+  h2_gameInit();
+  setTimeout(() => h2_gameStart(), 50);
+  setTimeout(() => {
+    if (!h2_gameEnded) document.getElementById('hack2-fail-btn').style.display = 'inline-block';
+  }, 5000);
+}
+
+function hack2Complete() {
+  document.getElementById('hack2-screen').style.display = 'none';
+  document.getElementById('coords-locked').style.display   = 'none';
+  document.getElementById('coords-unlocked').style.display = 'block';
+  document.getElementById('coords-unlocked').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hack2Failed() {
+  setBanned();
+  document.getElementById('hack2-screen').style.display = 'none';
+  const ls = document.getElementById('lockout-screen');
+  ls.classList.add('active');
+  const codes = [
+    'TRACE_ID: \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588 // AGENT_DISPATCH: AKTYWNY // ETA: 00:03:47',
+    'IDENTITY_LOGGED :: BIOMETRIC_HASH: 0xF4A2C1 :: FLAGGED',
+    'NEURAL_PATTERN_STORED :: THREAT_LEVEL: OMEGA :: RESPONSE: LETHAL',
+    'LOCATION_TRIANGULATED :: SECTOR_7G :: UNIT_DISPATCHED',
+    'SESSION_TERMINATED :: DATA_WIPED :: EVIDENCE_DESTROYED',
+  ];
+  let ci = 0;
+  const codeEl = document.getElementById('lockout-code');
+  setInterval(() => { ci = (ci+1) % codes.length; codeEl.textContent = codes[ci]; }, 1200);
+  setTimeout(() => {
+    ls.innerHTML = '<div class="lockout-static"></div>';
+    setTimeout(() => { document.body.style.background = '#000'; ls.style.background = '#000'; }, 1500);
+  }, 6000);
+}
+
+var _kb2 = '';
+document.addEventListener('keydown', (e) => {
+  _kb2 += e.key.toLowerCase();
+  if (_kb2.length > 7) _kb2 = _kb2.slice(-7);
+  if (_kb2 === atob('dmluY2VudA==')) {
+    _kb2 = '';
+    if (document.getElementById('hack2-screen').style.display === 'flex' && !h2_gameEnded) {
+      h2_gameEnded = true;
+      clearInterval(h2_progressBarInterval);
+      hack2Complete();
+    }
+  }
+});
+</script>
+
+<script>
+// ===== HACK3 =====
+var h3_progressBarInterval;
+var h3_gameEnded = false;
+var h3_finish = true;
+var h3_keys = [];
+var h3_lineMove = [];
+var h3_keyCodes = { left: 37, up: 38, right: 39, down: 40 };
+var h3_loopInterval = null;
+
+function h3_getRnd(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
+
+function h3_isColliding(a, b) {
+  if (!a || !b) return false;
+  const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+  return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x &&
+         r1.y < r2.y + r2.height && r1.y + r1.height > r2.y;
+}
+
+function h3_gameInit() {
+  h3_gameEnded = false; h3_finish = true;
+  document.getElementById('h3-hackFunction').style.display = 'none';
+  document.getElementById('h3-hackText').style.display     = 'none';
+  document.getElementById('h3-progressBox').style.display  = 'none';
+  document.getElementById('h3-hackInfo').style.display     = 'none';
+  document.getElementById('h3-buttonStart').style.display  = 'none';
+  for (let i = 1; i < 16; i++) {
+    const el = document.getElementById('line' + i);
+    if (el) el.style.top = h3_getRnd(-40, -450) + 'px';
+  }
+}
+
+function h3_gameStart() {
+  if (h3_gameEnded) return;
+  document.getElementById('h3-buttonStart').style.display  = 'none';
+  document.getElementById('h3-progressBox').style.display  = 'block';
+  document.getElementById('h3-hackInfo').style.display     = 'block';
+  document.getElementById('h3-textInfo').innerHTML         = 'Przygotuj sie...';
+  const circ = document.getElementById('h3-circle');
+  circ.style.top = '270px'; circ.style.left = '10px';
+  h3_finish = true;
+  h3_progressBarStart('start', 2);
+}
+
+function h3_gameOver() {
+  h3_gameEnded = true; h3_finish = true;
+  clearInterval(h3_progressBarInterval);
+  if (h3_loopInterval) clearInterval(h3_loopInterval);
+  document.getElementById('h3-hackFunction').style.display = 'none';
+  document.getElementById('h3-hackText').style.display     = 'none';
+  document.getElementById('h3-progressBox').style.display  = 'none';
+  document.getElementById('h3-hackInfo').style.display     = 'block';
+  document.getElementById('h3-textInfo').innerHTML         = 'Weryfikacja nieudana!';
+  const lbl = document.getElementById('hack3-status-label');
+  if (lbl) { lbl.textContent = 'WERYFIKACJA NIEUDANA'; lbl.style.color = 'var(--red2)'; }
+  setTimeout(() => hack3Failed(), 2000);
+}
+
+function h3_gameFinish() {
+  h3_gameEnded = true; h3_finish = true;
+  clearInterval(h3_progressBarInterval);
+  if (h3_loopInterval) clearInterval(h3_loopInterval);
+  document.getElementById('h3-hackFunction').style.display = 'none';
+  document.getElementById('h3-hackText').style.display     = 'none';
+  document.getElementById('h3-progressBox').style.display  = 'none';
+  document.getElementById('h3-hackInfo').style.display     = 'block';
+  document.getElementById('h3-textInfo').innerHTML         = 'Weryfikacja udana!';
+  const lbl = document.getElementById('hack3-status-label');
+  if (lbl) { lbl.textContent = 'DOSTEP PRZYWROCONY'; lbl.style.color = 'var(--accent2)'; }
+  setTimeout(() => hack3Complete(), 2000);
+}
+
+function h3_progressBarStart(type, time) {
+  var maxwidth = 1000, width = maxwidth;
+  const process = () => {
+    if (width > 0) {
+      if (type === 'start' || type === 'end') width -= 3; else width--;
+      document.getElementById('h3-progress-bar').style.width = (width * 100.0 / maxwidth) + '%';
+    } else {
+      clearInterval(h3_progressBarInterval);
+      if (type === 'start') {
+        document.getElementById('h3-hackFunction').style.display = '';
+        document.getElementById('h3-hackText').style.display     = '';
+        document.getElementById('h3-hackInfo').style.display     = 'none';
+        h3_finish = false;
+        h3_progressBarStart('game', 30);
+        h3_startLoop();
+        return;
+      }
+      if (type === 'game') { h3_gameOver(); return; }
+    }
+  };
+  clearInterval(h3_progressBarInterval);
+  h3_progressBarInterval = setInterval(process, time);
+}
+
+function h3_startLoop() {
+  if (h3_loopInterval) clearInterval(h3_loopInterval);
+  h3_loopInterval = setInterval(() => {
+    if (h3_finish) return;
+    const circ = document.getElementById('h3-circle');
+    if (!circ) return;
+    for (let i = 0; i < 30; i++) {
+      if (h3_isColliding(circ, document.getElementById('h3-' + i))) { h3_gameOver(); return; }
+    }
+    for (let i = 1; i < 16; i++) {
+      const el = document.getElementById('line' + i);
+      if (!el) continue;
+      var y = parseInt(el.style.top, 10);
+      let randomY = h3_getRnd(-400, -450);
+      if (y < randomY) h3_lineMove[i] = true;
+      if (y > randomY && !h3_lineMove[i]) y--;
+      else if (y < h3_getRnd(-40, -60) && h3_lineMove[i]) y++;
+      else h3_lineMove[i] = false;
+      el.style.top = y + 'px';
+    }
+    var x = parseInt(circ.style.left, 10), y2 = parseInt(circ.style.top, 10);
+    if (h3_keys[h3_keyCodes.left]  && x > 0)   x -= 1;
+    if (h3_keys[h3_keyCodes.right] && x < 700)  x += 1;
+    if (h3_keys[h3_keyCodes.up]    && y2 > 0)   y2 -= 1;
+    if (h3_keys[h3_keyCodes.down]  && y2 < 590) y2 += 1;
+    circ.style.left = x + 'px'; circ.style.top = y2 + 'px';
+    if (x >= 650) h3_gameFinish();
+  }, 15);
+}
+
+window.addEventListener('keydown', e => { h3_keys[e.keyCode] = true; });
+window.addEventListener('keyup',   e => { h3_keys[e.keyCode] = false; });
+
+function launchHack3() {
+  document.getElementById('banned-screen').classList.remove('active');
+  const hs = document.getElementById('hack3-screen');
+  hs.classList.add('active');
+  h3_gameInit();
+  setTimeout(() => h3_gameStart(), 50);
+  setTimeout(() => {
+    if (!h3_gameEnded) document.getElementById('hack3-fail-btn').style.display = 'inline-block';
+  }, 5000);
+}
+
+function hack3Complete() {
+  clearBanned();
+  document.getElementById('hack3-screen').classList.remove('active');
+  document.getElementById('hack3-screen').style.display = 'none';
+  document.getElementById('pass-screen').style.display = 'flex';
+  document.getElementById('pass-input').value = '';
+  document.getElementById('pass-input').focus();
+}
+
+function hack3Failed() {
+  document.getElementById('hack3-screen').classList.remove('active');
+  document.getElementById('hack3-screen').style.display = 'none';
+  document.getElementById('banned-screen').classList.add('active');
+}
+</script>
+</body>
+</html>
